@@ -7,6 +7,7 @@ mod test;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Standard {
+    #[cfg(feature = "node-v1")]
     /// 1.0.0
     V1
 }
@@ -15,7 +16,10 @@ impl Standard {
     #[inline]
     pub fn to_bytes(&self) -> &[u8] {
         match self {
-            Standard::V1 => &[0]
+            #[cfg(feature = "node-v1")]
+            Standard::V1 => &[0],
+
+            _ => unreachable!()
         }
     }
 
@@ -24,9 +28,10 @@ impl Standard {
         let bytes = bytes.as_ref();
 
         match bytes[0] {
+            #[cfg(feature = "node-v1")]
             0 => Ok(Self::V1),
 
-            _ => anyhow::bail!("Unknown `node::Standard` bytes sequence found: {:?}", bytes)
+            _ => anyhow::bail!("Unsupported `node::Standard` bytes sequence found: {:?}", bytes)
         }
     }
 }
