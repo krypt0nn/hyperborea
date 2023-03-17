@@ -1,23 +1,85 @@
 use std::net::{SocketAddr, Ipv4Addr, Ipv6Addr};
 
-use serde::{Serialize, Deserialize};
-
 #[cfg(test)]
 mod test;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Address {
+    #[cfg(feature = "node-v1")]
+    V1(Vec<u8>)
+}
+
+impl std::fmt::Display for Address {
+    #[allow(unused_variables, unreachable_patterns)]
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            #[cfg(feature = "node-v1")]
+            // v1:0anpmr7j1b9pdf9iodl76rhflgshlg7n6g5ohcntjrbl81hcdqffs
+            Self::V1(bytes) => write!(f, "v1:{}", data_encoding::BASE32HEX_NOPAD.encode(bytes).to_ascii_lowercase()),
+
+            _ => unreachable!()
+        }
+    }
+}
+
+impl TryFrom<&str> for Address {
+    type Error = anyhow::Error;
+
+    fn try_from(address: &str) -> Result<Self, Self::Error> {
+        #[cfg(feature = "node-v1")]
+        if &address[..3] == "v1:" {
+            let bytes = data_encoding::BASE32HEX_NOPAD.decode(address[3..].to_ascii_uppercase().as_bytes())?;
+
+            if k256::PublicKey::from_sec1_bytes(&bytes).is_ok() {
+                return Ok(Self::V1(bytes))
+            }
+        }
+
+        anyhow::bail!("Unable to decode address: {address}");
+    }
+} 
+
+#[cfg(feature = "node-v1")]
+impl From<k256::PublicKey> for Address {
+    #[inline]
+    fn from(public_key: k256::PublicKey) -> Self {
+        Self::V1(public_key.to_sec1_bytes().to_vec())
+    }
+}
+
+impl From<Standard> for Address {
+    #[inline]
+    fn from(standard: Standard) -> Self {
+        match standard {
+            #[cfg(feature = "node-v1")]
+            Standard::V1 { public_key } => public_key.into()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Standard {
     #[cfg(feature = "node-v1")]
     /// 1.0.0
-    V1
+    V1 {
+        public_key: k256::PublicKey
+    }
 }
 
 impl Standard {
     #[inline]
-    pub fn to_bytes(&self) -> &[u8] {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        #[allow(unreachable_patterns)]
         match self {
             #[cfg(feature = "node-v1")]
-            Standard::V1 => &[0],
+            Standard::V1 { public_key } => {
+                let mut bytes = vec![0];
+
+                bytes.extend_from_slice(&public_key.to_sec1_bytes());
+
+                bytes
+            },
 
             _ => unreachable!()
         }
@@ -29,14 +91,16 @@ impl Standard {
 
         match bytes[0] {
             #[cfg(feature = "node-v1")]
-            0 => Ok(Self::V1),
+            0 => Ok(Self::V1 {
+                public_key: k256::PublicKey::from_sec1_bytes(&bytes[1..])?
+            }),
 
             _ => anyhow::bail!("Unsupported `node::Standard` bytes sequence found: {:?}", bytes)
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Node {
     pub address: SocketAddr,
     pub standard: Standard
@@ -49,6 +113,11 @@ impl Node {
             address,
             standard
         }
+    }
+
+    #[inline]
+    pub fn address(&self) -> Address {
+        self.standard.into()
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -76,7 +145,7 @@ impl Node {
         }
 
         // Save protocol standard (1+ bytes)
-        bytes.extend_from_slice(self.standard.to_bytes());
+        bytes.append(&mut self.standard.to_bytes());
 
         bytes
     }
