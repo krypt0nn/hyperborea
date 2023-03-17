@@ -2,23 +2,27 @@ use std::net::{SocketAddr, Ipv4Addr, Ipv6Addr};
 
 use serde::{Serialize, Deserialize};
 
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Standard {
+    /// 1.0.0
     V1
 }
 
-impl<'a> From<Standard> for &'a [u8] {
-    fn from(standard: Standard) -> Self {
-        match standard {
+impl Standard {
+    #[inline]
+    pub fn to_bytes(&self) -> &[u8] {
+        match self {
             Standard::V1 => &[0]
         }
     }
-}
 
-impl TryFrom<&[u8]> for Standard {
-    type Error = anyhow::Error;
+    #[inline]
+    pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> anyhow::Result<Self> {
+        let bytes = bytes.as_ref();
 
-    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         match bytes[0] {
             0 => Ok(Self::V1),
 
@@ -34,45 +38,47 @@ pub struct Node {
 }
 
 impl Node {
-    
-}
+    #[inline]
+    pub fn new(address: SocketAddr, standard: Standard) -> Self {
+        Self {
+            address,
+            standard
+        }
+    }
 
-impl From<Node> for Vec<u8> {
-    fn from(node: Node) -> Self {
+    pub fn to_bytes(&self) -> Vec<u8> {
         // IPv4 is the most used standard, 7 bytes
         // Standard V1 uses 1 byte
         let mut bytes = Vec::with_capacity(8);
 
         // Save endpoint address
-        match node.address {
+        match self.address {
             // 7 bytes:
             // [0] [ip_1] [ip_2] [ip_3] [ip_4] [port_1] [port_2]
             SocketAddr::V4(addr) => {
                 bytes.push(0);
-                bytes.copy_from_slice(&addr.ip().octets());
-                bytes.copy_from_slice(&addr.port().to_be_bytes());
+                bytes.extend_from_slice(&addr.ip().octets());
+                bytes.extend_from_slice(&addr.port().to_be_bytes());
             }
 
             // 11 bytes:
             // [0] [ip_1] [ip_2] [ip_3] [ip_4] [ip_5] [ip_6] [ip_7] [ip_8] [port_1] [port_2]
             SocketAddr::V6(addr) => {
                 bytes.push(1);
-                bytes.copy_from_slice(&addr.ip().octets());
-                bytes.copy_from_slice(&addr.port().to_be_bytes());
+                bytes.extend_from_slice(&addr.ip().octets());
+                bytes.extend_from_slice(&addr.port().to_be_bytes());
             }
         }
 
         // Save protocol standard (1+ bytes)
-        bytes.copy_from_slice(node.standard.into());
+        bytes.extend_from_slice(self.standard.to_bytes());
 
         bytes
     }
-}
 
-impl TryFrom<&[u8]> for Node {
-    type Error = anyhow::Error;
+    pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> anyhow::Result<Self> {
+        let bytes = bytes.as_ref();
 
-    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         match bytes[0] {
             // IPv4
             0 => {
@@ -81,9 +87,9 @@ impl TryFrom<&[u8]> for Node {
 
                 Ok(Self {
                     address: SocketAddr::new(ip.into(), port),
-                    standard: Standard::try_from(&bytes[7..])?
+                    standard: Standard::from_bytes(&bytes[7..])?
                 })
-            },
+            }
 
             // IPv6
             1 => {
@@ -98,7 +104,7 @@ impl TryFrom<&[u8]> for Node {
 
                 Ok(Self {
                     address: SocketAddr::new(ip.into(), port),
-                    standard: Standard::try_from(&bytes[19..])?
+                    standard: Standard::from_bytes(&bytes[19..])?
                 })
             }
 
