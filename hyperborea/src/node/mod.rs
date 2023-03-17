@@ -15,8 +15,8 @@ impl std::fmt::Display for Address {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             #[cfg(feature = "node-v1")]
-            // v1:0anpmr7j1b9pdf9iodl76rhflgshlg7n6g5ohcntjrbl81hcdqffs
-            Self::V1(bytes) => write!(f, "v1:{}", data_encoding::BASE32HEX_NOPAD.encode(bytes).to_ascii_lowercase()),
+            // v1:08qn0a0vddm8e1rngljl5cmhsrdnoo8ej3la6m3m3k4v5j5euoh6i
+            Self::V1(bytes) => write!(f, "v1:{}", data_encoding::BASE32_DNSSEC.encode(bytes)),
 
             _ => unreachable!()
         }
@@ -29,7 +29,7 @@ impl TryFrom<&str> for Address {
     fn try_from(address: &str) -> Result<Self, Self::Error> {
         #[cfg(feature = "node-v1")]
         if &address[..3] == "v1:" {
-            let bytes = data_encoding::BASE32HEX_NOPAD.decode(address[3..].to_ascii_uppercase().as_bytes())?;
+            let bytes = data_encoding::BASE32_DNSSEC.decode(address[3..].as_bytes())?;
 
             if k256::PublicKey::from_sec1_bytes(&bytes).is_ok() {
                 return Ok(Self::V1(bytes))
@@ -61,7 +61,6 @@ impl From<Standard> for Address {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Standard {
     #[cfg(feature = "node-v1")]
-    /// 1.0.0
     V1 {
         public_key: k256::PublicKey
     }
