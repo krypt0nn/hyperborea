@@ -67,7 +67,6 @@ pub enum Standard {
 }
 
 impl Standard {
-    #[inline]
     pub fn to_bytes(&self) -> Vec<u8> {
         #[allow(unreachable_patterns)]
         match self {
@@ -84,7 +83,6 @@ impl Standard {
         }
     }
 
-    #[inline]
     pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> anyhow::Result<Self> {
         let bytes = bytes.as_ref();
 
@@ -117,6 +115,11 @@ impl Node {
     #[inline]
     pub fn address(&self) -> Address {
         self.standard.into()
+    }
+
+    #[inline]
+    pub fn endpoint(&self) -> SocketAddr {
+        self.address
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {

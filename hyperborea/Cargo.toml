@@ -22,4 +22,8 @@ node = ["dep:data-encoding"]
 node-v1 = ["node", "dep:k256"]
 node-all = ["node", "node-v1"]
 
-default = ["node", "node-all"]
+packet = []
+packet-v1 = ["packet"]
+packet-all = ["packet", "packet-v1"]
+
+default = ["node-all", "packet-all"]
