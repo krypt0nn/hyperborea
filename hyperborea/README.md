@@ -1,5 +1,11 @@
 # Hyperborea
 
+Special features:
+
+| Feature | Description |
+| - | - |
+| `async` | Use `tokio` async in networking methods |
+
 # Protocol specification
 
 ## Nodes

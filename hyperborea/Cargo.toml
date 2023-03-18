@@ -13,9 +13,13 @@ data-encoding = { version = "2.3.3", optional = true }
 # node-v1: cryptography
 k256 = { version = "0.13.0", optional = true }
 
+# async
+tokio = { version = "1.26.0", features = ["net"], optional = true }
+
 [dev-dependencies]
 rand = "0.8.5"
 lazy_static = "1.4.0"
+tokio = { features = ["macros", "test-util"] }
 
 [features]
 node = ["dep:data-encoding"]
@@ -27,4 +31,7 @@ packet = []
 packet-v1 = ["packet"]
 packet-all = ["packet", "packet-v1"]
 
-default = ["node-all", "packet-all"]
+controller = ["node", "node-owned", "packet"]
+
+async = ["dep:tokio"]
+default = ["node-all", "packet-all", "controller", "async"]

@@ -1,4 +1,7 @@
 #[cfg(feature = "packet-v1")]
+pub type Latest = V1;
+
+#[cfg(feature = "packet-v1")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum V1 {
     AuthRequest(u64),

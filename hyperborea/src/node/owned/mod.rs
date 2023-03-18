@@ -1,21 +1,24 @@
 use std::net::{SocketAddr, Ipv4Addr, Ipv6Addr};
 
-use super::{Address, Node};
+use super::{
+    Address,
+    Node as RemoteNode
+};
 
 mod standard;
 
 pub use standard::Standard;
 
 #[cfg(test)]
-mod test;
+pub mod test;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct OwnedNode {
+pub struct Node {
     pub address: SocketAddr,
     pub standard: Standard
 }
 
-impl OwnedNode {
+impl Node {
     #[inline]
     pub fn new(address: SocketAddr, standard: Standard) -> Self {
         Self {
@@ -99,11 +102,17 @@ impl OwnedNode {
     }
 }
 
-impl From<OwnedNode> for Node {
-    fn from(node: OwnedNode) -> Self {
+impl From<Node> for RemoteNode {
+    fn from(node: Node) -> Self {
         Self {
             address: node.address,
             standard: node.standard.into()
         }
+    }
+}
+
+impl AsRef<Node> for Node {
+    fn as_ref(&self) -> &Node {
+        self
     }
 }

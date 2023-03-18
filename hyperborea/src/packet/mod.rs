@@ -1,20 +1,12 @@
 pub mod standards;
 
 #[cfg(test)]
-mod test;
+pub mod test;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Packet {
     #[cfg(feature = "packet-v1")]
     V1(standards::V1)
-}
-
-#[cfg(feature = "packet-v1")]
-impl From<standards::V1> for Packet {
-    #[inline]
-    fn from(packet: standards::V1) -> Self {
-        Self::V1(packet)
-    }
 }
 
 impl Packet {
@@ -42,6 +34,29 @@ impl Packet {
             0 => Ok(Self::V1(standards::V1::from_bytes(&bytes[1..])?)),
 
             _ => anyhow::bail!("Unsupported `packet::Packet` bytes sequence found: {:?}", bytes)
+        }
+    }
+}
+
+impl AsRef<Packet> for Packet {
+    fn as_ref(&self) -> &Packet {
+        self
+    }
+}
+
+#[cfg(feature = "packet-v1")]
+impl From<standards::V1> for Packet {
+    #[inline]
+    fn from(packet: standards::V1) -> Self {
+        Self::V1(packet)
+    }
+}
+
+#[cfg(feature = "packet-v1")]
+impl PartialEq<standards::V1> for Packet {
+    fn eq(&self, other: &standards::V1) -> bool {
+        match self {
+            Packet::V1(packet) => packet == other
         }
     }
 }

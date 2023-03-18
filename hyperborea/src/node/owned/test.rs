@@ -29,9 +29,9 @@ fn test_standard() -> anyhow::Result<()> {
 fn test_node() -> anyhow::Result<()> {
     for endpoint in ENDPOINTS.iter() {
         for standard in STANDARDS.iter() {
-            let node = OwnedNode::new(*endpoint, standard.to_owned());
+            let node = Node::new(*endpoint, standard.to_owned());
 
-            assert_eq!(OwnedNode::from_bytes(node.to_bytes())?, node);
+            assert_eq!(Node::from_bytes(node.to_bytes())?, node);
         }
     }
 

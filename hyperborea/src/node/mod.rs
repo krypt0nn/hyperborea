@@ -10,7 +10,7 @@ pub use address::Address;
 pub use standard::Standard;
 
 #[cfg(test)]
-mod test;
+pub mod test;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Node {
@@ -99,5 +99,11 @@ impl Node {
 
             _ => anyhow::bail!("Unknown `node::Node` address's bytes sequence found: {:?}", bytes)
         }
+    }
+}
+
+impl AsRef<Node> for Node {
+    fn as_ref(&self) -> &Node {
+        self
     }
 }
