@@ -1,24 +1,21 @@
 use std::net::{SocketAddr, Ipv4Addr, Ipv6Addr};
 
-#[cfg(feature = "node-owned")]
-pub mod owned;
+use super::{Address, Node};
 
-mod address;
 mod standard;
 
-pub use address::Address;
 pub use standard::Standard;
 
 #[cfg(test)]
 mod test;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Node {
+pub struct OwnedNode {
     pub address: SocketAddr,
     pub standard: Standard
 }
 
-impl Node {
+impl OwnedNode {
     #[inline]
     pub fn new(address: SocketAddr, standard: Standard) -> Self {
         Self {
@@ -29,7 +26,7 @@ impl Node {
 
     #[inline]
     pub fn address(&self) -> Address {
-        self.standard.into()
+        self.standard.clone().into()
     }
 
     #[inline]
@@ -97,7 +94,16 @@ impl Node {
                 })
             }
 
-            _ => anyhow::bail!("Unknown `node::Node` address's bytes sequence found: {:?}", bytes)
+            _ => anyhow::bail!("Unknown `node::owned::Standard` address's bytes sequence found: {:?}", bytes)
+        }
+    }
+}
+
+impl From<OwnedNode> for Node {
+    fn from(node: OwnedNode) -> Self {
+        Self {
+            address: node.address,
+            standard: node.standard.into()
         }
     }
 }

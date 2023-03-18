@@ -8,6 +8,8 @@
 | - | - | - |
 | v1 | [secp256k1](https://crates.io/crates/k256) | IPv4 / IPv6, UDP |
 
+Same applies to `OwnedNode`
+
 ### Addresses
 
 Addresses standards are related to nodes' standards: v1 node uses v1 address, and so on

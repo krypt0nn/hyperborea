@@ -19,8 +19,9 @@ lazy_static = "1.4.0"
 
 [features]
 node = ["dep:data-encoding"]
+node-owned = ["node"]
 node-v1 = ["node", "dep:k256"]
-node-all = ["node", "node-v1"]
+node-all = ["node", "node-owned", "node-v1"]
 
 packet = []
 packet-v1 = ["packet"]
