@@ -42,3 +42,11 @@ impl From<k256::PublicKey> for Address {
         Self::V1(public_key.to_sec1_bytes().to_vec())
     }
 }
+
+#[cfg(feature = "node-v1")]
+impl From<&k256::PublicKey> for Address {
+    #[inline]
+    fn from(public_key: &k256::PublicKey) -> Self {
+        Self::V1(public_key.to_sec1_bytes().to_vec())
+    }
+}

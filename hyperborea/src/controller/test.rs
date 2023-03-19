@@ -30,7 +30,7 @@ fn test_controller_connection() -> anyhow::Result<()> {
 
     std::thread::spawn(move || {
         for packet in PACKETS.iter() {
-            assert_eq!(&server.recv().unwrap(), packet);
+            assert_eq!(&server.recv().unwrap().0, packet);
         }
     });
 
@@ -51,7 +51,7 @@ async fn test_controller_connection_async() -> anyhow::Result<()> {
 
     tokio::spawn(async move {
         for packet in PACKETS.iter() {
-            assert_eq!(&server.recv().await.unwrap(), packet);
+            assert_eq!(&server.recv().await.unwrap().0, packet);
         }
     });
 
@@ -86,7 +86,7 @@ fn test_controller_mass_connection() -> anyhow::Result<()> {
     std::thread::spawn(move || {
         for _ in 0..10000 {
             for packet in PACKETS.iter() {
-                assert_eq!(&server.recv().unwrap(), packet);
+                assert_eq!(&server.recv().unwrap().0, packet);
             }
         }
     });
@@ -122,7 +122,7 @@ async fn test_controller_mass_connection_async() -> anyhow::Result<()> {
     tokio::spawn(async move {
         for _ in 0..10000 {
             for packet in PACKETS.iter() {
-                assert_eq!(&server.recv().await.unwrap(), packet);
+                assert_eq!(&server.recv().await.unwrap().0, packet);
             }
         }
     });

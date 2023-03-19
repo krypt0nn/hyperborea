@@ -56,9 +56,28 @@ impl From<Standard> for NodeStandard {
     }
 }
 
+impl From<&Standard> for NodeStandard {
+    fn from(standard: &Standard) -> Self {
+        match standard {
+            #[cfg(feature = "node-v1")]
+            Standard::V1 { secret_key } => NodeStandard::V1 { public_key: secret_key.public_key() }
+        }
+    }
+}
+
 impl From<Standard> for Address {
     #[inline]
     fn from(standard: Standard) -> Self {
+        match standard {
+            #[cfg(feature = "node-v1")]
+            Standard::V1 { secret_key } => secret_key.public_key().into()
+        }
+    }
+}
+
+impl From<&Standard> for Address {
+    #[inline]
+    fn from(standard: &Standard) -> Self {
         match standard {
             #[cfg(feature = "node-v1")]
             Standard::V1 { secret_key } => secret_key.public_key().into()

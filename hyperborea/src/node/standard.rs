@@ -55,3 +55,13 @@ impl From<Standard> for Address {
         }
     }
 }
+
+impl From<&Standard> for Address {
+    #[inline]
+    fn from(standard: &Standard) -> Self {
+        match standard {
+            #[cfg(feature = "node-v1")]
+            Standard::V1 { public_key } => public_key.into()
+        }
+    }
+}
