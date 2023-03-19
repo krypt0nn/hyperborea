@@ -37,6 +37,24 @@ impl Node {
         self.address
     }
 
+    pub fn verify<T: AsRef<[u8]>>(&self, data: T, sign: T) -> anyhow::Result<()> {
+        #[allow(unreachable_patterns)]
+        match self.standard {
+            #[cfg(feature = "node-v1")]
+            Standard::V1 { public_key } => {
+                use k256::ecdsa::signature::Verifier;
+
+                let sign = k256::ecdsa::Signature::from_der(sign.as_ref())?;
+
+                k256::ecdsa::VerifyingKey::from_affine(*public_key.as_affine())?
+                    .verify(data.as_ref(), &sign)
+                    .map_err(|e| e.into())
+            }
+
+            _ => unreachable!()
+        }
+    }
+
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 

@@ -54,3 +54,19 @@ fn test_address() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_signing() -> anyhow::Result<()> {
+    for endpoint in ENDPOINTS.iter() {
+        for standard in STANDARDS.iter() {
+            let node = Node::new(*endpoint, standard.to_owned());
+
+            let data = rand::random::<u128>().to_be_bytes();
+            let sign = node.sign(data)?;
+
+            node.verify(data.as_slice(), &sign)?;
+        }
+    }
+
+    Ok(())
+}

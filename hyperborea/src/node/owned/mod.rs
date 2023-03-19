@@ -2,7 +2,8 @@ use std::net::{SocketAddr, Ipv4Addr, Ipv6Addr};
 
 use super::{
     Address,
-    Node as RemoteNode
+    Node as RemoteNode,
+    Standard as RemoteStandard
 };
 
 mod standard;
@@ -35,6 +36,27 @@ impl Node {
     #[inline]
     pub fn endpoint(&self) -> SocketAddr {
         self.address
+    }
+
+    pub fn sign<T: AsRef<[u8]>>(&self, data: T) -> anyhow::Result<Vec<u8>> {
+        #[allow(unreachable_patterns)]
+        match &self.standard {
+            #[cfg(feature = "node-v1")]
+            Standard::V1 { secret_key } => {
+                use k256::ecdsa::signature::Signer;
+
+                let signer = k256::ecdsa::SigningKey::from_bytes(&secret_key.to_bytes())?;
+                let sign: k256::ecdsa::Signature = signer.try_sign(data.as_ref())?;
+
+                Ok(sign.to_der().to_bytes().to_vec())
+            }
+
+            _ => unreachable!()
+        }
+    }
+
+    pub fn verify<T: AsRef<[u8]>>(&self, data: T, sign: T) -> anyhow::Result<()> {
+        RemoteNode::from(self).verify(data, sign)
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -107,6 +129,15 @@ impl From<Node> for RemoteNode {
         Self {
             address: node.address,
             standard: node.standard.into()
+        }
+    }
+}
+
+impl From<&Node> for RemoteNode {
+    fn from(node: &Node) -> Self {
+        Self {
+            address: node.address,
+            standard: RemoteStandard::from(&node.standard)
         }
     }
 }
