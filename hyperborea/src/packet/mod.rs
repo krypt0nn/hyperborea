@@ -3,7 +3,7 @@ pub mod standards;
 #[cfg(test)]
 pub mod test;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Packet {
     #[cfg(feature = "packet-v1")]
     V1(standards::V1)

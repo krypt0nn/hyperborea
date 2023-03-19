@@ -24,7 +24,7 @@ impl Standard {
             Standard::V1 { secret_key } => {
                 let mut bytes = vec![0];
 
-                bytes.extend_from_slice(&secret_key.to_bytes());
+                bytes.extend_from_slice(secret_key.to_bytes().as_slice());
 
                 bytes
             },

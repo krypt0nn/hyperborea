@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Address {
     #[cfg(feature = "node-v1")]
     V1(Vec<u8>)
