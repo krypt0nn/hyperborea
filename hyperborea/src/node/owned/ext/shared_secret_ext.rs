@@ -10,6 +10,7 @@ pub trait SharedSecretExt {
 }
 
 impl<S: AsRef<Standard>> SharedSecretExt for S {
+    #[inline]
     fn shared_secret<T, F>(&self, standard: T, salt: Option<F>) -> anyhow::Result<[u8; 1024]>
     where
         T: AsRef<RemoteStandard>,
@@ -20,6 +21,18 @@ impl<S: AsRef<Standard>> SharedSecretExt for S {
 }
 
 impl SharedSecretExt for &Node {
+    #[inline]
+    fn shared_secret<T, F>(&self, standard: T, salt: Option<F>) -> anyhow::Result<[u8; 1024]>
+    where
+        T: AsRef<RemoteStandard>,
+        F: AsRef<[u8]>
+    {
+        standard.as_ref().shared_secret(&self.standard, salt)
+    }
+}
+
+impl SharedSecretExt for Node {
+    #[inline]
     fn shared_secret<T, F>(&self, standard: T, salt: Option<F>) -> anyhow::Result<[u8; 1024]>
     where
         T: AsRef<RemoteStandard>,

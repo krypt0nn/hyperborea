@@ -1,6 +1,12 @@
-use std::net::{SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
-
 use super::*;
+
+use crate::node::Node as RemoteNode;
+use crate::node::SharedSecretExt as _;
+
+use crate::node::test::{
+    ENDPOINTS,
+    STANDARDS as REMOTE_STANDARDS
+};
 
 lazy_static::lazy_static! {
     pub static ref STANDARDS: Vec<Standard> = vec![
@@ -8,11 +14,6 @@ lazy_static::lazy_static! {
         Standard::V1 {
             secret_key: k256::SecretKey::random(&mut rand::thread_rng())
         }
-    ];
-
-    pub static ref ENDPOINTS: Vec<SocketAddr> = vec![
-        SocketAddrV4::new(Ipv4Addr::LOCALHOST, 12345).into(),
-        SocketAddrV6::new(Ipv6Addr::LOCALHOST, 12345, 0, 0).into()
     ];
 }
 
@@ -65,6 +66,26 @@ fn test_signing() -> anyhow::Result<()> {
             let sign = node.sign(data)?;
 
             node.verify(data.as_slice(), &sign)?;
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn test_shared_secret() -> anyhow::Result<()> {
+    for endpoint in ENDPOINTS.iter() {
+        for standard in STANDARDS.iter() {
+            let node = Node::new(*endpoint, standard.to_owned());
+
+            for standard in REMOTE_STANDARDS.iter() {
+                let salt = &rand::random::<u128>().to_be_bytes();
+
+                let secret_owned = node.shared_secret(standard, Some(salt))?;
+                let secret_remote = standard.shared_secret(&node.standard, Some(salt))?;
+
+                assert_eq!(secret_owned, secret_remote);
+            }
         }
     }
 
