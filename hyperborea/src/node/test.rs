@@ -3,14 +3,14 @@ use std::net::{SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 use super::*;
 
 lazy_static::lazy_static! {
-    static ref STANDARDS: Vec<Standard> = vec![
+    pub static ref STANDARDS: Vec<Standard> = vec![
         #[cfg(feature = "node-v1")]
         Standard::V1 {
             public_key: k256::SecretKey::random(&mut rand::thread_rng()).public_key()
         }
     ];
 
-    static ref ENDPOINTS: Vec<SocketAddr> = vec![
+    pub static ref ENDPOINTS: Vec<SocketAddr> = vec![
         SocketAddrV4::new(Ipv4Addr::LOCALHOST, 12345).into(),
         SocketAddrV6::new(Ipv6Addr::LOCALHOST, 12345, 0, 0).into()
     ];

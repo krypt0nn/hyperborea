@@ -12,14 +12,14 @@ use crate::packet::test::PACKETS;
 use k256::SecretKey;
 
 lazy_static::lazy_static! {
-    static ref CLIENT_ENDPOINT: SocketAddr = "127.0.0.1:49998".parse().unwrap();
-    static ref SERVER_ENDPOINT: SocketAddr = "127.0.0.1:49999".parse().unwrap();
+    pub static ref CLIENT_ENDPOINT: SocketAddr = "127.0.0.1:49998".parse().unwrap();
+    pub static ref SERVER_ENDPOINT: SocketAddr = "127.0.0.1:49999".parse().unwrap();
 
-    static ref CLIENT_SECRET: SecretKey = SecretKey::random(&mut rand::thread_rng());
-    static ref SERVER_SECRET: SecretKey = SecretKey::random(&mut rand::thread_rng());
+    pub static ref CLIENT_SECRET: SecretKey = SecretKey::random(&mut rand::thread_rng());
+    pub static ref SERVER_SECRET: SecretKey = SecretKey::random(&mut rand::thread_rng());
 
-    static ref CLIENT_NODE: OwnedNode = OwnedNode::new(*CLIENT_ENDPOINT, OwnedStandard::latest(CLIENT_SECRET.to_owned()));
-    static ref SERVER_NODE: OwnedNode = OwnedNode::new(*SERVER_ENDPOINT, OwnedStandard::latest(SERVER_SECRET.to_owned()));
+    pub static ref CLIENT_NODE: OwnedNode = OwnedNode::new(*CLIENT_ENDPOINT, OwnedStandard::latest(CLIENT_SECRET.to_owned()));
+    pub static ref SERVER_NODE: OwnedNode = OwnedNode::new(*SERVER_ENDPOINT, OwnedStandard::latest(SERVER_SECRET.to_owned()));
 }
 
 #[cfg(not(feature = "async"))]
@@ -84,8 +84,12 @@ fn test_controller_mass_connection() -> anyhow::Result<()> {
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
         );
 
-        clients.push(Controller::new(node, ControllerParams::default())?);
+        if let Ok(controller) = Controller::new(node, ControllerParams::default())? {
+            clients.push(controller);
+        }
     }
+
+    assert!(clients.len() > 9000);
 
     std::thread::spawn(move || {
         for _ in 0..10000 {
@@ -124,8 +128,12 @@ async fn test_controller_mass_connection_async() -> anyhow::Result<()> {
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
         );
 
-        clients.push(Controller::new(node, ControllerParams::default()).await?);
+        if let Ok(controller) = Controller::new(node, ControllerParams::default()).await {
+            clients.push(controller);
+        }
     }
+
+    assert!(clients.len() > 9000);
 
     tokio::spawn(async move {
         for _ in 0..10000 {

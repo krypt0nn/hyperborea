@@ -1,10 +1,22 @@
 use super::*;
+use crate::node::Node;
+use crate::node::test::{ENDPOINTS, STANDARDS};
 
 lazy_static::lazy_static! {
-    pub static ref PACKETS: Vec<standards::V1> = vec![
-        standards::V1::AuthRequest(rand::random::<u128>().to_be_bytes().to_vec()),
-        standards::V1::AuthResponse(rand::random::<u128>().to_be_bytes().to_vec())
-    ];
+    pub static ref PACKETS: Vec<standards::V1> = {
+        let mut base = vec![
+            standards::V1::AuthRequest(rand::random::<u128>().to_be_bytes().to_vec()),
+            standards::V1::AuthResponse(rand::random::<u128>().to_be_bytes().to_vec())
+        ];
+
+        for endpoint in ENDPOINTS.iter().copied() {
+            for standard in STANDARDS.iter().copied() {
+                base.push(standards::V1::Introduce(Node::new(endpoint, standard)));
+            }
+        }
+
+        base
+    };
 }
 
 #[test]
