@@ -1,5 +1,3 @@
-use std::net::SocketAddr;
-
 #[cfg(feature = "async")]
 use tokio::net::UdpSocket;
 
@@ -7,42 +5,59 @@ use tokio::net::UdpSocket;
 use std::net::UdpSocket;
 
 use crate::node::Node;
-use crate::node::owned::Node as OwnedNode;
-use crate::node::owned::SignExt;
+use crate::node::owned::{Node as OwnedNode, SignExt};
 
 use crate::packet::Packet;
 use crate::packet::standards as packets;
 
 pub mod indexing;
 
+mod standard;
+
+pub use standard::Standard;
+
 #[cfg(test)]
 pub mod test;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ControllerParams {
+    /// Controller standard
+    /// 
+    /// Default is `Standard::default()`
+    pub standard: Standard,
+
     /// Support V1 nodes standard
     /// 
-    /// `true` by default
+    /// Default is `true`
     pub support_v1: bool,
 
-    /// Replace endpoint addresses in `Packet::Introduce` nodes
+    /// Add random useless bytes to the end of sending packets
+    /// 
+    /// This feature can somehow help to hide protocol detection
+    /// 
+    /// Default is `false`
+    pub chaotic_tail: bool,
+
+    /// Replace endpoint addresses in packet nodes
     /// by socket address which sent you this packet
     /// 
     /// Note that this can break compatibility with some systems
     /// 
-    /// `false` by default
+    /// Default is `false`
     pub use_real_endpoint: bool,
 
     /// Algorithm used to store and share remote nodes
     /// 
-    /// `Storage(None)` by default
+    /// Default is `Strategy::default()`
     pub indexing_strategy: indexing::Strategy
 }
 
 impl Default for ControllerParams {
     fn default() -> Self {
         Self {
+            standard: Standard::default(),
             support_v1: true,
+            chaotic_tail: false,
             use_real_endpoint: false,
             indexing_strategy: indexing::Strategy::default()
         }
@@ -91,23 +106,41 @@ impl Controller {
         &self.socket
     }
 
+    /// Send UDP packet to remote node
     #[cfg(not(feature = "async"))]
-    pub fn send<T: AsRef<Node>, F: AsRef<Packet>>(&self, node: T, packet: F) -> std::io::Result<usize> {
-        self.socket.send_to(&packet.as_ref().to_bytes(), node.as_ref().endpoint())
+    pub fn send<T: AsRef<Node>, F: AsRef<Packet>>(&self, node: T, packet: F) -> anyhow::Result<usize> {
+        self.socket.send_to(
+            &self.params.standard.to_bytes(node.as_ref(), packet, &self.owned_node)?,
+            node.as_ref().endpoint()
+        )
     }
 
+    /// Send UDP packet to remote node
     #[cfg(feature = "async")]
-    pub async fn send<T: AsRef<Node>, F: AsRef<Packet>>(&self, node: T, packet: F) -> std::io::Result<usize> {
-        self.socket.send_to(&packet.as_ref().to_bytes(), node.as_ref().endpoint()).await
+    pub async fn send<T: AsRef<Node>, F: AsRef<Packet>>(&self, node: T, packet: F) -> anyhow::Result<usize> {
+        self.socket.send_to(
+            &self.params.standard.to_bytes(node.as_ref(), packet, &self.owned_node)?,
+            node.as_ref().endpoint()
+        ).await.map_err(|e| e.into())
     }
 
+    /// Receive UDP packet and try to decode it
+    /// 
+    /// Note that this method should not be used in end application.
+    /// Use `update` method instead
     #[cfg(not(feature = "async"))]
-    pub fn recv(&self) -> anyhow::Result<(Packet, SocketAddr)> {
-        let mut buf = [0; 1024];
+    pub fn recv(&self) -> anyhow::Result<(Packet, Node)> {
+        let mut buf = [0; 65536];
 
         let (len, from) = self.socket.recv_from(&mut buf)?;
 
-        Ok((Packet::from_bytes(&buf[..len])?, from))
+        let (mut node, packet) = Standard::from_bytes(&buf[..len], &self.owned_node)?;
+
+        if self.params.use_real_endpoint {
+            node.address = from;
+        }
+
+        Ok((node, packet))
     }
 
     /// Receive UDP packet and try to decode it
@@ -115,18 +148,24 @@ impl Controller {
     /// Note that this method should not be used in end application.
     /// Use `update` method instead
     #[cfg(feature = "async")]
-    pub async fn recv(&self) -> anyhow::Result<(Packet, SocketAddr)> {
-        let mut buf = [0; 1024];
+    pub async fn recv(&self) -> anyhow::Result<(Node, Packet)> {
+        let mut buf = [0; 65536];
 
         let (len, from) = self.socket.recv_from(&mut buf).await?;
 
-        Ok((Packet::from_bytes(&buf[..len])?, from))
+        let (mut node, packet) = Standard::from_bytes(&buf[..len], &self.owned_node)?;
+
+        if self.params.use_real_endpoint {
+            node.address = from;
+        }
+
+        Ok((node, packet))
     }
 
     /// Update UDP socket
     #[cfg(feature = "async")]
     pub async fn update(&mut self) -> anyhow::Result<()> {
-        let (packet, from) = self.recv().await?;
+        let (from, packet) = self.recv().await?;
 
         match packet {
             Packet::V1(packet) => match packet {
@@ -141,10 +180,6 @@ impl Controller {
                 }
 
                 packets::V1::Introduce(mut node) => {
-                    if self.params.use_real_endpoint {
-                        node.address = from;
-                    }
-
                     // TODO
                     self.storage.insert(node);
                 }

@@ -81,8 +81,11 @@ fn test_shared_secret() -> anyhow::Result<()> {
             for standard in REMOTE_STANDARDS.iter() {
                 let salt = &rand::random::<u128>().to_be_bytes();
 
-                let secret_owned = node.shared_secret(standard, Some(salt))?;
-                let secret_remote = standard.shared_secret(&node.standard, Some(salt))?;
+                let mut secret_owned = [0; 1024];
+                let mut secret_remote = [0; 1024];
+
+                node.shared_secret(standard, Some(salt), &mut secret_owned)?;
+                standard.shared_secret(&node.standard, Some(salt), &mut secret_remote)?;
 
                 assert_eq!(secret_owned, secret_remote);
             }

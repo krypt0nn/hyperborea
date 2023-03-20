@@ -2,14 +2,14 @@ use crate::node::*;
 
 pub trait SharedSecretExt {
     /// Generate shared secret with owned node
-    fn shared_secret<T, F>(&self, standard: T, salt: Option<F>) -> anyhow::Result<[u8; 1024]>
+    fn shared_secret<T, F>(&self, standard: T, salt: Option<F>, secret_output: &mut [u8]) -> anyhow::Result<()>
     where
         T: AsRef<owned::Standard>,
         F: AsRef<[u8]>;
 }
 
 impl<S: AsRef<Standard>> SharedSecretExt for S {
-    fn shared_secret<T, F>(&self, standard: T, salt: Option<F>) -> anyhow::Result<[u8; 1024]>
+    fn shared_secret<T, F>(&self, standard: T, salt: Option<F>, secret_output: &mut [u8]) -> anyhow::Result<()>
     where
         T: AsRef<owned::Standard>,
         F: AsRef<[u8]> 
@@ -24,8 +24,6 @@ impl<S: AsRef<Standard>> SharedSecretExt for S {
                     owned::Standard::V1 { secret_key } => {
                         use k256::sha2::Sha512;
 
-                        let mut secret = [0; 1024];
-
                         let result = k256::ecdh::diffie_hellman(secret_key.to_nonzero_scalar(), public_key.as_affine());
 
                         let result = match salt {
@@ -33,13 +31,13 @@ impl<S: AsRef<Standard>> SharedSecretExt for S {
                             None => result.extract::<Sha512>(None)
                         };
 
-                        let result = result.expand(&[], &mut secret);
+                        let result = result.expand(&[], secret_output);
 
                         if let Err(err) = result {
                             anyhow::bail!("Couldn't create shared secret: {err}");
                         }
 
-                        Ok(secret)
+                        Ok(())
                     }
 
                     _ => anyhow::bail!("Couldn't create shared secret: incompatible standards")

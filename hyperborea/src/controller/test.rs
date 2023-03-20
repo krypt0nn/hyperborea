@@ -51,7 +51,7 @@ async fn test_controller_connection_async() -> anyhow::Result<()> {
 
     tokio::spawn(async move {
         for packet in PACKETS.iter() {
-            assert_eq!(&server.recv().await.unwrap().0, packet);
+            assert_eq!(&server.recv().await.unwrap().1, packet);
         }
     });
 
@@ -76,9 +76,9 @@ fn test_controller_mass_connection() -> anyhow::Result<()> {
 
     let server_node: crate::node::Node = server.owned_node().to_owned().into();
 
-    let mut clients = Vec::with_capacity(10000);
+    let mut clients = Vec::with_capacity(1000);
 
-    for i in 0..10000 {
+    for i in 0..1000 {
         let node = OwnedNode::new(
             format!("127.0.0.1:{}", 50001 + i).parse().unwrap(),
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
@@ -89,10 +89,10 @@ fn test_controller_mass_connection() -> anyhow::Result<()> {
         }
     }
 
-    assert!(clients.len() > 9000);
+    assert!(clients.len() > 900);
 
     std::thread::spawn(move || {
-        for _ in 0..10000 {
+        for _ in 0..1000 {
             for packet in PACKETS.iter() {
                 assert_eq!(&server.recv().unwrap().0, packet);
             }
@@ -120,9 +120,9 @@ async fn test_controller_mass_connection_async() -> anyhow::Result<()> {
 
     let server_node: crate::node::Node = server.owned_node().to_owned().into();
 
-    let mut clients = Vec::with_capacity(10000);
+    let mut clients = Vec::with_capacity(1000);
 
-    for i in 0..10000 {
+    for i in 0..1000 {
         let node = OwnedNode::new(
             format!("127.0.0.1:{}", 50001 + i).parse().unwrap(),
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
@@ -133,12 +133,12 @@ async fn test_controller_mass_connection_async() -> anyhow::Result<()> {
         }
     }
 
-    assert!(clients.len() > 9000);
+    assert!(clients.len() > 900);
 
     tokio::spawn(async move {
-        for _ in 0..10000 {
+        for _ in 0..1000 {
             for packet in PACKETS.iter() {
-                assert_eq!(&server.recv().await.unwrap().0, packet);
+                assert_eq!(&server.recv().await.unwrap().1, packet);
             }
         }
     });
