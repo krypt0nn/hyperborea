@@ -65,3 +65,10 @@ impl From<&Standard> for Address {
         }
     }
 }
+
+impl AsRef<Standard> for Standard {
+    #[inline]
+    fn as_ref(&self) -> &Standard {
+        self
+    }
+}

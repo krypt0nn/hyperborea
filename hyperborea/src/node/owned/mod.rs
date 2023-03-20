@@ -7,8 +7,10 @@ use super::{
 };
 
 mod standard;
+mod ext;
 
 pub use standard::Standard;
+pub use ext::*;
 
 #[cfg(test)]
 pub mod test;
@@ -36,27 +38,6 @@ impl Node {
     #[inline]
     pub fn endpoint(&self) -> SocketAddr {
         self.address
-    }
-
-    pub fn sign<T: AsRef<[u8]>>(&self, data: T) -> anyhow::Result<Vec<u8>> {
-        #[allow(unreachable_patterns)]
-        match &self.standard {
-            #[cfg(feature = "node-v1")]
-            Standard::V1 { secret_key } => {
-                use k256::ecdsa::signature::Signer;
-
-                let signer = k256::ecdsa::SigningKey::from_bytes(&secret_key.to_bytes())?;
-                let sign: k256::ecdsa::Signature = signer.try_sign(data.as_ref())?;
-
-                Ok(sign.to_der().to_bytes().to_vec())
-            }
-
-            _ => unreachable!()
-        }
-    }
-
-    pub fn verify<T: AsRef<[u8]>>(&self, data: T, sign: T) -> anyhow::Result<()> {
-        RemoteNode::from(self).verify(data, sign)
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -125,6 +106,7 @@ impl Node {
 }
 
 impl From<Node> for RemoteNode {
+    #[inline]
     fn from(node: Node) -> Self {
         Self {
             address: node.address,
@@ -134,6 +116,7 @@ impl From<Node> for RemoteNode {
 }
 
 impl From<&Node> for RemoteNode {
+    #[inline]
     fn from(node: &Node) -> Self {
         Self {
             address: node.address,
@@ -143,6 +126,7 @@ impl From<&Node> for RemoteNode {
 }
 
 impl AsRef<Node> for Node {
+    #[inline]
     fn as_ref(&self) -> &Node {
         self
     }

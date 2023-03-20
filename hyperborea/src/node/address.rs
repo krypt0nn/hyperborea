@@ -50,3 +50,10 @@ impl From<&k256::PublicKey> for Address {
         Self::V1(public_key.to_sec1_bytes().to_vec())
     }
 }
+
+impl AsRef<Address> for Address {
+    #[inline]
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}

@@ -1,4 +1,4 @@
-use crate::node::Standard as NodeStandard;
+use crate::node::Standard as RemoteStandard;
 use super::Address;
 
 /// `node::owned::Node` standard descriptor
@@ -47,30 +47,12 @@ impl Standard {
     }
 }
 
-impl From<Standard> for NodeStandard {
-    fn from(standard: Standard) -> Self {
-        match standard {
-            #[cfg(feature = "node-v1")]
-            Standard::V1 { secret_key } => NodeStandard::V1 { public_key: secret_key.public_key() }
-        }
-    }
-}
-
-impl From<&Standard> for NodeStandard {
-    fn from(standard: &Standard) -> Self {
-        match standard {
-            #[cfg(feature = "node-v1")]
-            Standard::V1 { secret_key } => NodeStandard::V1 { public_key: secret_key.public_key() }
-        }
-    }
-}
-
-impl From<Standard> for Address {
+impl<S: AsRef<Standard>> From<S> for RemoteStandard {
     #[inline]
-    fn from(standard: Standard) -> Self {
-        match standard {
+    fn from(standard: S) -> Self {
+        match standard.as_ref() {
             #[cfg(feature = "node-v1")]
-            Standard::V1 { secret_key } => secret_key.public_key().into()
+            Standard::V1 { secret_key } => RemoteStandard::V1 { public_key: secret_key.public_key() }
         }
     }
 }
@@ -82,5 +64,19 @@ impl From<&Standard> for Address {
             #[cfg(feature = "node-v1")]
             Standard::V1 { secret_key } => secret_key.public_key().into()
         }
+    }
+}
+
+impl From<Standard> for Address {
+    #[inline]
+    fn from(standard: Standard) -> Self {
+        Address::from(&standard)
+    }
+}
+
+impl AsRef<Standard> for Standard {
+    #[inline]
+    fn as_ref(&self) -> &Standard {
+        self
     }
 }
