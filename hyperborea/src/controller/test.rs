@@ -36,7 +36,7 @@ fn test_controller_connection() -> anyhow::Result<()> {
 
     let server_node: crate::node::Node = SERVER_NODE.to_owned().into();
 
-    for packet in PACKETS.iter().copied() {
+    for packet in PACKETS.iter().cloned() {
         client.send::<_, crate::packet::Packet>(&server_node, packet.into())?;
     }
 
@@ -84,7 +84,7 @@ fn test_controller_mass_connection() -> anyhow::Result<()> {
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
         );
 
-        if let Ok(controller) = Controller::new(node, ControllerParams::default())? {
+        if let Ok(controller) = Controller::new(node, ControllerParams::default()) {
             clients.push(controller);
         }
     }
@@ -100,7 +100,7 @@ fn test_controller_mass_connection() -> anyhow::Result<()> {
     });
 
     for client in clients {
-        for packet in PACKETS.iter().copied() {
+        for packet in PACKETS.iter().cloned() {
             client.send::<_, crate::packet::Packet>(&server_node, packet.into())?;
         }
     }
