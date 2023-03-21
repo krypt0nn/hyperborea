@@ -188,37 +188,50 @@ impl Controller {
 
         // Aggressive node indexing
         if self.params.aggressive_indexing {
-            self.storage.insert(from);
+            self.storage.insert(from.clone());
         }
 
-        match packet {
-            Packet::V1(packet) => match packet {
-                packets::V1::AuthRequest(bytes) => {
-                    let sign = self.owned_node.sign(bytes)?;
-
-                    // self.send(, packet)
+        // Try to resolve outcoming request
+        if let Some((_, response, _)) = self.requests.resolve(from.address(), &packet) {
+            match response {
+                // Remote has proved its availability (`AuthRequest`)
+                requests::Response::AuthResponse(_) => {
+                    self.storage.insert(from);
                 }
+            }
+        }
 
-                packets::V1::AuthResponse(bytes) => {
-                    // TODO
-                }
+        // Or process incoming request
+        else {
+            match packet {
+                Packet::V1(packet) => match packet {
+                    packets::V1::AuthRequest(bytes) => {
+                        let sign = self.owned_node.sign(bytes)?;
 
-                packets::V1::Introduce(node) => {
-                    // Naively index introduced node without verifying it
-                    if self.params.naive_indexing {
-                        self.storage.insert(node);
+                        // self.send(, packet)
                     }
 
-                    // Send node verification request
-                    else {
-                        let random_slice = [0; 1024].into_iter().map(|_| rand::random()).collect();
+                    packets::V1::Introduce(node) => {
+                        // Naively index introduced node without verifying it
+                        if self.params.naive_indexing {
+                            self.storage.insert(node);
+                        }
 
-                        let packet: Packet = packets::Latest::AuthRequest(random_slice).into();
+                        // Send node verification request
+                        else {
+                            let random_slice = [0; 1024].into_iter().map(|_| rand::random()).collect();
 
-                        self.send(node.as_ref(), packet.as_ref()).await?;
+                            let packet: Packet = packets::Latest::AuthRequest(random_slice).into();
 
-                        self.requests.index(node.address(), packet);
+                            self.send(node.as_ref(), packet.as_ref()).await?;
+
+                            self.requests.index(node.address(), packet);
+                        }
                     }
+
+                    // It was unregistered outcoming request
+                    // or some random packet?
+                    _ => ()
                 }
             }
         }

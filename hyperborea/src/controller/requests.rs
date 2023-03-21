@@ -51,13 +51,13 @@ impl Requests {
         unreachable!()
     }
 
-    pub fn resolve<T: AsRef<Address>>(&mut self, address: T, packet: Packet) -> Option<(Request, Response, Duration)> {
+    pub fn resolve<T: AsRef<Address>, F: AsRef<Packet>>(&mut self, address: T, packet: F) -> Option<(Request, Response, Duration)> {
         if let Some(requests) = self.requests.get_mut(address.as_ref()) {
             #[allow(unreachable_patterns)]
-            let response = match packet {
+            let response = match packet.as_ref() {
                 #[cfg(feature = "packet-v1")]
                 Packet::V1(packet) => match packet {
-                    standards::V1::AuthResponse(slice) => Response::AuthResponse(slice),
+                    standards::V1::AuthResponse(slice) => Response::AuthResponse(slice.clone()),
 
                     _ => return None
                 }
