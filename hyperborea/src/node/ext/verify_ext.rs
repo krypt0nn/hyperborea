@@ -26,6 +26,13 @@ impl VerifyExt for Standard {
 }
 
 impl VerifyExt for Address {
+    #[inline]
+    fn verify<T: AsRef<[u8]>>(&self, data: T, sign: T) -> anyhow::Result<()> {
+        (&self).verify(data, sign)
+    }
+}
+
+impl VerifyExt for &Address {
     fn verify<T: AsRef<[u8]>>(&self, data: T, sign: T) -> anyhow::Result<()> {
         #[allow(unreachable_patterns)]
         match &self {

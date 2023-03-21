@@ -11,6 +11,7 @@ use crate::packet::Packet;
 use crate::packet::standards as packets;
 
 pub mod indexing;
+pub mod requests;
 
 mod standard;
 
@@ -31,13 +32,6 @@ pub struct ControllerParams {
     /// Default is `true`
     pub support_v1: bool,
 
-    /// Add random useless bytes to the end of sending packets
-    /// 
-    /// This feature can somehow help to hide protocol detection
-    /// 
-    /// Default is `false`
-    pub chaotic_tail: bool,
-
     /// Replace endpoint addresses in packet nodes
     /// by socket address which sent you this packet
     /// 
@@ -49,7 +43,23 @@ pub struct ControllerParams {
     /// Algorithm used to store and share remote nodes
     /// 
     /// Default is `Strategy::default()`
-    pub indexing_strategy: indexing::Strategy
+    pub indexing_strategy: indexing::Strategy,
+
+    /// Use naive indexing strategy (always index `Introduce` nodes)
+    /// without verifying them using `AuthRequest` packet
+    /// 
+    /// This feature can be abused by malicious nodes, but it also
+    /// significantly reduces amount of sent UDP packets
+    /// 
+    /// Default is `false`
+    pub naive_indexing: bool,
+
+    /// Index nodes from every incoming packet
+    /// 
+    /// This feature won't verify indexing nodes using `AuthRequest` packet
+    /// 
+    /// Default is `false`
+    pub aggressive_indexing: bool
 }
 
 impl Default for ControllerParams {
@@ -57,9 +67,10 @@ impl Default for ControllerParams {
         Self {
             standard: Standard::default(),
             support_v1: true,
-            chaotic_tail: false,
             use_real_endpoint: false,
-            indexing_strategy: indexing::Strategy::default()
+            indexing_strategy: indexing::Strategy::default(),
+            naive_indexing: false,
+            aggressive_indexing: false
         }
     }
 }
@@ -70,7 +81,9 @@ pub struct Controller {
     socket: UdpSocket,
 
     params: ControllerParams,
-    storage: indexing::Storage
+    storage: indexing::Storage,
+
+    requests: requests::Requests
 }
 
 impl Controller {
@@ -80,8 +93,11 @@ impl Controller {
         Ok(Self {
             socket: UdpSocket::bind(owned_node.endpoint())?,
             owned_node,
+
             params,
-            storage: params.indexing_strategy.into()
+            storage: params.indexing_strategy.into(),
+
+            requests: requests::Requests::default()
         })
     }
 
@@ -91,8 +107,11 @@ impl Controller {
         Ok(Self {
             socket: UdpSocket::bind(owned_node.endpoint()).await?,
             owned_node,
+
             params,
-            storage: params.indexing_strategy.into()
+            storage: params.indexing_strategy.into(),
+
+            requests: requests::Requests::default()
         })
     }
 
@@ -167,6 +186,11 @@ impl Controller {
     pub async fn update(&mut self) -> anyhow::Result<()> {
         let (from, packet) = self.recv().await?;
 
+        // Aggressive node indexing
+        if self.params.aggressive_indexing {
+            self.storage.insert(from);
+        }
+
         match packet {
             Packet::V1(packet) => match packet {
                 packets::V1::AuthRequest(bytes) => {
@@ -179,9 +203,22 @@ impl Controller {
                     // TODO
                 }
 
-                packets::V1::Introduce(mut node) => {
-                    // TODO
-                    self.storage.insert(node);
+                packets::V1::Introduce(node) => {
+                    // Naively index introduced node without verifying it
+                    if self.params.naive_indexing {
+                        self.storage.insert(node);
+                    }
+
+                    // Send node verification request
+                    else {
+                        let random_slice = [0; 1024].into_iter().map(|_| rand::random()).collect();
+
+                        let packet: Packet = packets::Latest::AuthRequest(random_slice).into();
+
+                        self.send(node.as_ref(), packet.as_ref()).await?;
+
+                        self.requests.index(node.address(), packet);
+                    }
                 }
             }
         }

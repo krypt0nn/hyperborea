@@ -1,6 +1,5 @@
 use super::*;
 
-use crate::node::Node as RemoteNode;
 use crate::node::SharedSecretExt as _;
 
 use crate::node::test::{
