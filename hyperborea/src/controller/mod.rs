@@ -196,7 +196,7 @@ impl Controller {
             match response {
                 // Remote has proved its availability (`AuthRequest`)
                 requests::Response::AuthResponse(_) => {
-                    self.storage.insert(from);
+                    self.storage.insert(from.clone());
                 }
             }
         }
@@ -208,7 +208,7 @@ impl Controller {
                     packets::V1::AuthRequest(bytes) => {
                         let sign = self.owned_node.sign(bytes)?;
 
-                        // self.send(, packet)
+                        self.send::<_, Packet>(from, packets::V1::AuthResponse(sign).into()).await?;
                     }
 
                     packets::V1::Introduce(node) => {
