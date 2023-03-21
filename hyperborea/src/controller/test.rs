@@ -4,7 +4,8 @@ use super::*;
 
 use crate::node::owned::{
     Node as OwnedNode,
-    Standard as OwnedStandard
+    Standard as OwnedStandard,
+    VerifyExt
 };
 
 use crate::packet::test::PACKETS;
@@ -148,6 +149,32 @@ async fn test_controller_mass_connection_async() -> anyhow::Result<()> {
             client.send::<_, crate::packet::Packet>(&server_node, packet.into()).await?;
         }
     }
+
+    Ok(())
+}
+
+#[cfg(feature = "async")]
+#[tokio::test]
+async fn test_auth_request_async() -> anyhow::Result<()> {
+    let client = Controller::new(CLIENT_NODE.to_owned(), ControllerParams::default()).await?;
+    let mut server = Controller::new(SERVER_NODE.to_owned(), ControllerParams::default()).await?;
+
+    let server_node: Node = server.owned_node().into();
+
+    tokio::spawn(async move {
+        while server.update().await.is_ok() {}
+    });
+
+    let random_slice = [0; 1024].into_iter().map(|_| rand::random()).collect::<Vec<u8>>();
+
+    client.send::<_, Packet>(&server_node, packets::V1::AuthRequest(random_slice.clone()).into()).await?;
+
+    // todo fixme doesn't receive server response
+    let Ok((_, Packet::V1(packets::V1::AuthResponse(signed_slice)))) = client.recv().await else {
+        anyhow::bail!("Wront response received");
+    };
+
+    server_node.verify(random_slice, signed_slice)?;
 
     Ok(())
 }
