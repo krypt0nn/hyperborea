@@ -35,7 +35,7 @@ impl Standard {
             Self::V1 => {
                 let mut buf = vec![0];
 
-                let mut node_bytes = node.as_ref().to_bytes();
+                let mut node_bytes = Node::from(sender.as_ref()).to_bytes();
                 let mut packet_bytes = packet.as_ref().to_bytes();
 
                 // Append Node bytes

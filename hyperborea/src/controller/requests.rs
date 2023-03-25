@@ -32,6 +32,7 @@ impl Requests {
 
         // Always Some
         if let Some(requests) = self.requests.get_mut(address.as_ref()) {
+            #[allow(unreachable_patterns)]
             let request = match packet {
                 #[cfg(feature = "packet-v1")]
                 Packet::V1(packet) => match packet {

@@ -1,10 +1,8 @@
-#[cfg(feature = "async")]
+use std::sync::Arc;
+
 use tokio::net::UdpSocket;
 
-#[cfg(not(feature = "async"))]
-use std::net::UdpSocket;
-
-use crate::node::Node;
+use crate::node::{Node, Standard as NodeStandard};
 use crate::node::owned::{Node as OwnedNode, SignExt};
 
 use crate::packet::Packet;
@@ -75,10 +73,10 @@ impl Default for ControllerParams {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Controller {
     owned_node: OwnedNode,
-    socket: UdpSocket,
+    socket: Arc<UdpSocket>,
 
     params: ControllerParams,
     storage: indexing::Storage,
@@ -88,24 +86,9 @@ pub struct Controller {
 
 impl Controller {
     #[inline]
-    #[cfg(not(feature = "async"))]
-    pub fn new(owned_node: OwnedNode, params: ControllerParams) -> anyhow::Result<Self> {
-        Ok(Self {
-            socket: UdpSocket::bind(owned_node.endpoint())?,
-            owned_node,
-
-            params,
-            storage: params.indexing_strategy.into(),
-
-            requests: requests::Requests::default()
-        })
-    }
-
-    #[inline]
-    #[cfg(feature = "async")]
     pub async fn new(owned_node: OwnedNode, params: ControllerParams) -> anyhow::Result<Self> {
         Ok(Self {
-            socket: UdpSocket::bind(owned_node.endpoint()).await?,
+            socket: Arc::new(UdpSocket::bind(owned_node.endpoint()).await?),
             owned_node,
 
             params,
@@ -126,47 +109,17 @@ impl Controller {
     }
 
     /// Send UDP packet to remote node
-    #[cfg(not(feature = "async"))]
-    pub fn send<T: AsRef<Node>, F: AsRef<Packet>>(&self, node: T, packet: F) -> anyhow::Result<usize> {
-        self.socket.send_to(
-            &self.params.standard.to_bytes(node.as_ref(), packet, &self.owned_node)?,
-            node.as_ref().endpoint()
-        )
-    }
-
-    /// Send UDP packet to remote node
-    #[cfg(feature = "async")]
     pub async fn send<T: AsRef<Node>, F: AsRef<Packet>>(&self, node: T, packet: F) -> anyhow::Result<usize> {
-        self.socket.send_to(
+        Ok(self.socket.send_to(
             &self.params.standard.to_bytes(node.as_ref(), packet, &self.owned_node)?,
             node.as_ref().endpoint()
-        ).await.map_err(|e| e.into())
+        ).await?)
     }
 
     /// Receive UDP packet and try to decode it
     /// 
     /// Note that this method should not be used in end application.
     /// Use `update` method instead
-    #[cfg(not(feature = "async"))]
-    pub fn recv(&self) -> anyhow::Result<(Packet, Node)> {
-        let mut buf = [0; 65536];
-
-        let (len, from) = self.socket.recv_from(&mut buf)?;
-
-        let (mut node, packet) = Standard::from_bytes(&buf[..len], &self.owned_node)?;
-
-        if self.params.use_real_endpoint {
-            node.address = from;
-        }
-
-        Ok((node, packet))
-    }
-
-    /// Receive UDP packet and try to decode it
-    /// 
-    /// Note that this method should not be used in end application.
-    /// Use `update` method instead
-    #[cfg(feature = "async")]
     pub async fn recv(&self) -> anyhow::Result<(Node, Packet)> {
         let mut buf = [0; 65536];
 
@@ -182,9 +135,15 @@ impl Controller {
     }
 
     /// Update UDP socket
-    #[cfg(feature = "async")]
     pub async fn update(&mut self) -> anyhow::Result<()> {
         let (from, packet) = self.recv().await?;
+
+        // Skip packet if our controller said to ignore v1 nodes
+        match from.standard {
+            NodeStandard::V1 { .. } => if !self.params.support_v1 {
+                return Ok(());
+            }
+        }
 
         // Aggressive node indexing
         if self.params.aggressive_indexing {

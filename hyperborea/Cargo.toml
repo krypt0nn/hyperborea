@@ -15,15 +15,16 @@ data-encoding = { version = "2.3.3", optional = true }
 k256 = { version = "0.13.0", features = ["ecdh"], optional = true }
 
 # controller
-aes-gcm = { version = "0.10.1", features = ["std"], optional = true }
-
-# async
 tokio = { version = "1.26.0", features = ["net"], optional = true }
+
+# controller-v1: cryptography
+aes-gcm = { version = "0.10.1", features = ["std"], optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
 lazy_static = "1.4.0"
 tokio = { features = ["macros", "test-util"] }
+serial_test = "1.0.0"
 
 [features]
 node = ["dep:data-encoding"]
@@ -35,9 +36,8 @@ packet = []
 packet-v1 = ["packet"]
 packet-all = ["packet", "packet-v1"]
 
-controller = ["node", "node-owned", "packet"]
+controller = ["node", "node-owned", "packet", "dep:tokio"]
 controller-v1 = ["controller", "dep:aes-gcm"]
 controller-all = ["controller", "controller-v1"]
 
-async = ["dep:tokio"]
-default = ["node-all", "packet-all", "controller-all", "async"]
+default = ["node-all", "packet-all", "controller-all"]
