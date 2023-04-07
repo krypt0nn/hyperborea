@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tokio::net::UdpSocket;
 
-use crate::node::{Node, Standard as NodeStandard};
+use crate::node::{Address, Node, Standard as NodeStandard};
 use crate::node::owned::{Node as OwnedNode, SignExt};
 
 use crate::packet::Packet;
@@ -16,7 +16,7 @@ mod standard;
 pub use standard::Standard;
 
 #[cfg(test)]
-pub mod test;
+pub mod tests;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ControllerParams {
@@ -106,6 +106,22 @@ impl Controller {
     #[inline]
     pub fn socket(&self) -> &UdpSocket {
         &self.socket
+    }
+
+    /// Request remote node from the known nodes
+    /// 
+    /// ! NOTE: This function is async and can never finish if remote address is not known
+    pub async fn find_remote(&self, address: impl AsRef<Address>) -> Option<Node> {
+        if let Some(node) = self.storage.get(address.as_ref()) {
+            return Some(node.to_owned());
+        }
+
+        for neighbor in self.storage.get_neighbors(address) {
+            // self.send(neighbor, packets::Latest::)
+            // TODO
+        }
+
+        None
     }
 
     /// Send UDP packet to remote node
