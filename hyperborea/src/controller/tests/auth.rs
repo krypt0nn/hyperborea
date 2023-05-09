@@ -7,8 +7,8 @@ use crate::node::owned::VerifyExt;
 #[serial]
 #[tokio::test]
 async fn test_auth_request() -> anyhow::Result<()> {
-    let client = Controller::new(CLIENT_NODE.to_owned(), ControllerParams::default()).await?;
-    let mut server = Controller::new(SERVER_NODE.to_owned(), ControllerParams::default()).await?;
+    let client = Controller::new(CLIENT_NODE.to_owned(), Params::default()).await?;
+    let mut server = Controller::new(SERVER_NODE.to_owned(), Params::default()).await?;
 
     let server_node_send: Node = server.owned_node().into();
     let server_node = server_node_send.clone();

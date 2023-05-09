@@ -14,8 +14,8 @@ use k256::SecretKey;
 #[serial]
 #[tokio::test]
 async fn test_controller_connection() -> anyhow::Result<()> {
-    let client = Controller::new(CLIENT_NODE.to_owned(), ControllerParams::default()).await?;
-    let server = Controller::new(SERVER_NODE.to_owned(), ControllerParams::default()).await?;
+    let client = Controller::new(CLIENT_NODE.to_owned(), Params::default()).await?;
+    let server = Controller::new(SERVER_NODE.to_owned(), Params::default()).await?;
 
     tokio::spawn(async move {
         for packet in PACKETS.iter() {
@@ -39,7 +39,7 @@ async fn test_controller_mass_connection() -> anyhow::Result<()> {
         OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
     );
 
-    let server = Controller::new(node, ControllerParams::default()).await?;
+    let server = Controller::new(node, Params::default()).await?;
 
     let server_node: crate::node::Node = server.owned_node().to_owned().into();
 
@@ -51,7 +51,7 @@ async fn test_controller_mass_connection() -> anyhow::Result<()> {
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
         );
 
-        if let Ok(controller) = Controller::new(node, ControllerParams::default()).await {
+        if let Ok(controller) = Controller::new(node, Params::default()).await {
             clients.push(controller);
         }
     }

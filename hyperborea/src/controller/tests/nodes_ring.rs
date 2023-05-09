@@ -7,7 +7,7 @@ use crate::controller::*;
 #[serial]
 #[tokio::test]
 async fn test_nodes_ring() -> anyhow::Result<()> {
-    let mut server = Controller::new(SERVER_NODE.clone(), ControllerParams::default()).await?;
+    let mut server = Controller::new(SERVER_NODE.clone(), Params::default()).await?;
 
     let mut ring = Vec::<(OwnedNode, _)>::with_capacity(1000);
 
@@ -17,7 +17,7 @@ async fn test_nodes_ring() -> anyhow::Result<()> {
             OwnedStandard::latest(SecretKey::random(&mut rand::thread_rng()))
         );
 
-        if let Ok(mut controller) = Controller::new(node.clone(), ControllerParams::default()).await {
+        if let Ok(mut controller) = Controller::new(node.clone(), Params::default()).await {
             if let Some((last, _)) = ring.last() {
                 controller.storage.insert(last.into());
             }
@@ -35,9 +35,9 @@ async fn test_nodes_ring() -> anyhow::Result<()> {
     }
 
     if let Some((last, _)) = ring.last() {
-        server.storage.insert(last.to_owned());
+        server.storage.insert(last.into());
 
-        server.find_remote(ring.first().unwrap());
+        server.find_remote(ring.first().unwrap().0.address()).await;
     }
 
     Ok(())
