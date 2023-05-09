@@ -12,6 +12,7 @@ pub enum Strategy {
 }
 
 impl Default for Strategy {
+    #[inline]
     fn default() -> Self {
         Self::Storage(None)
     }
@@ -28,7 +29,7 @@ pub enum Storage {
 impl Storage {
     pub fn insert(&mut self, node: Node) {
         match self {
-            Storage::Storage { map, size } => {
+            Self::Storage { map, size } => {
                 if let Some(size) = *size {
                     assert!(size > 0);
 
@@ -40,15 +41,24 @@ impl Storage {
         }
     }
 
+    #[inline]
     pub fn get<T: AsRef<Address>>(&self, address: T) -> Option<&Node> {
         match self {
-            Storage::Storage { map, .. } => map.get(address.as_ref())
+            Self::Storage { map, .. } => map.get(address.as_ref())
         }
     }
 
+    #[inline]
     pub fn contains<T: AsRef<Address>>(&self, address: T) -> bool {
         match self {
-            Storage::Storage { map, .. } => map.contains_key(address.as_ref())
+            Self::Storage { map, .. } => map.contains_key(address.as_ref())
+        }
+    }
+
+    #[inline]
+    pub fn get_neighbors<T: AsRef<Address>>(&self, _address: T) -> Vec<&Node> {
+        match self {
+            Self::Storage { map, .. } => map.values().collect()
         }
     }
 }
