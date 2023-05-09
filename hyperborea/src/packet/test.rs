@@ -1,5 +1,5 @@
 use super::*;
-use crate::node::Node;
+use crate::node::{Node, Address};
 use crate::node::test::{ENDPOINTS, STANDARDS};
 
 lazy_static::lazy_static! {
@@ -11,7 +11,11 @@ lazy_static::lazy_static! {
 
         for endpoint in ENDPOINTS.iter().copied() {
             for standard in STANDARDS.iter().copied() {
-                base.push(standards::V1::Introduce(Node::new(endpoint, standard)));
+                let node = Node::new(endpoint, standard);
+
+                base.push(standards::V1::Introduce(node.clone()));
+                base.push(standards::V1::SearchRequest { ttl: rand::random(), address: Address::from(standard), respond_to: node.clone() });
+                base.push(standards::V1::SearchResponse(node));
             }
         }
 

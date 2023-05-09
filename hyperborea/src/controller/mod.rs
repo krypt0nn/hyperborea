@@ -12,73 +12,20 @@ pub mod indexing;
 pub mod requests;
 
 mod standard;
+mod params;
 
 pub use standard::Standard;
+pub use params::*;
 
 #[cfg(test)]
 pub mod test;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ControllerParams {
-    /// Controller standard
-    /// 
-    /// Default is `Standard::default()`
-    pub standard: Standard,
-
-    /// Support V1 nodes standard
-    /// 
-    /// Default is `true`
-    pub support_v1: bool,
-
-    /// Replace endpoint addresses in packet nodes
-    /// by socket address which sent you this packet
-    /// 
-    /// Note that this can break compatibility with some systems
-    /// 
-    /// Default is `false`
-    pub use_real_endpoint: bool,
-
-    /// Algorithm used to store and share remote nodes
-    /// 
-    /// Default is `Strategy::default()`
-    pub indexing_strategy: indexing::Strategy,
-
-    /// Use naive indexing strategy (always index `Introduce` nodes)
-    /// without verifying them using `AuthRequest` packet
-    /// 
-    /// This feature can be abused by malicious nodes, but it also
-    /// significantly reduces amount of sent UDP packets
-    /// 
-    /// Default is `false`
-    pub naive_indexing: bool,
-
-    /// Index nodes from every incoming packet
-    /// 
-    /// This feature won't verify indexing nodes using `AuthRequest` packet
-    /// 
-    /// Default is `false`
-    pub aggressive_indexing: bool
-}
-
-impl Default for ControllerParams {
-    fn default() -> Self {
-        Self {
-            standard: Standard::default(),
-            support_v1: true,
-            use_real_endpoint: false,
-            indexing_strategy: indexing::Strategy::default(),
-            naive_indexing: false,
-            aggressive_indexing: false
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Controller {
     owned_node: OwnedNode,
     socket: Arc<UdpSocket>,
 
-    params: ControllerParams,
+    params: Params,
     storage: indexing::Storage,
 
     requests: requests::Requests
@@ -86,13 +33,13 @@ pub struct Controller {
 
 impl Controller {
     #[inline]
-    pub async fn new(owned_node: OwnedNode, params: ControllerParams) -> anyhow::Result<Self> {
+    pub async fn new(owned_node: OwnedNode, params: Params) -> anyhow::Result<Self> {
         Ok(Self {
             socket: Arc::new(UdpSocket::bind(owned_node.endpoint()).await?),
             owned_node,
 
             params,
-            storage: params.indexing_strategy.into(),
+            storage: params.indexing.strategy.into(),
 
             requests: requests::Requests::default()
         })
@@ -146,7 +93,7 @@ impl Controller {
         }
 
         // Aggressive node indexing
-        if self.params.aggressive_indexing {
+        if self.params.indexing.aggressive {
             self.storage.insert(from.clone());
         }
 
@@ -172,7 +119,7 @@ impl Controller {
 
                     packets::V1::Introduce(node) => {
                         // Naively index introduced node without verifying it
-                        if self.params.naive_indexing {
+                        if self.params.indexing.naive {
                             self.storage.insert(node);
                         }
 
