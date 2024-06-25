@@ -1,0 +1,39 @@
+[package]
+name = "hyperborealib"
+version = "0.1.0"
+description = "Hyperborea protocol implementation library"
+authors = ["Nikita Podvirnyi <krypt0nn@vk.com>"]
+homepage = "https://github.com/krypt0nn/hyperborea/hyperborealib"
+repository = "https://github.com/krypt0nn/hyperborea"
+license = "AGPL-3.0"
+edition = "2021"
+
+[features]
+tracing = ["dep:tracing"]
+client-reqwest = ["dep:reqwest"]
+server-axum = ["dep:axum", "dep:tokio"]
+
+[dependencies]
+thiserror = "1.0"
+async-trait = "0.1"
+lazy_static = "1.4.0"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+k256 = { version = "0.13", features = ["ecdh", "sha256"] }
+rand_chacha = "0.3"
+base64 = "0.22"
+
+# GlobalTableRouter
+moka = { version = "0.12", features = ["future"] }
+
+# Tracing feature
+tracing = { version = "0.1", optional = true }
+
+# Client features
+reqwest = { version = "0.12", features = ["rustls-tls", "json"], optional = true }
+
+# Server features
+axum = { version = "0.7", optional = true }
+tokio = { version = "1.38", features = ["rt-multi-thread", "macros"], optional = true }

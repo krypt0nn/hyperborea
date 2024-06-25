@@ -1,9 +1,0 @@
-{
-    "recommendations": [
-        "bungcip.better-toml",
-        "vivaxy.vscode-conventional-commits",
-        "serayuzgur.crates",
-        "rust-lang.rust-analyzer",
-        "gruntfuggly.todo-tree"
-    ]
-}

@@ -1,0 +1,14 @@
+[package]
+name = "hyperborea-server"
+version = "0.1.0"
+description = "Hyperborea protocol implementation server deamon"
+authors = ["Nikita Podvirnyi <krypt0nn@vk.com>"]
+homepage = "https://github.com/krypt0nn/hyperborea/hyperborea-server"
+repository = "https://github.com/krypt0nn/hyperborea"
+license = "GPL-3.0"
+edition = "2021"
+
+[dependencies]
+hyperborealib = { path = "../hyperborealib", features = ["client-reqwest", "server-axum"] }
+
+tokio = { version = "1.38", features = ["full"] }

@@ -1,0 +1,18 @@
+[package]
+name = "hyperbox"
+version = "0.1.0"
+description = "Hyperborea protocol testing toolkit"
+authors = ["Nikita Podvirnyi <krypt0nn@vk.com>"]
+homepage = "https://github.com/krypt0nn/hyperborea/hyperborealib"
+repository = "https://github.com/krypt0nn/hyperborea"
+license = "GPL-3.0"
+edition = "2021"
+
+[dependencies]
+hyperborealib = { path = "../hyperborealib", features = ["client-reqwest", "server-axum", "tracing"] }
+
+tokio = { version = "1.38", features = ["rt-multi-thread", "macros"] }
+
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"

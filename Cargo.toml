@@ -1,5 +1,17 @@
 [workspace]
+resolver = "2"
 members = [
-    "hyperborea",
-    "hyperborea-cli"
+    "hyperborealib",
+    "hyperborea-server",
+    "hyperbox"
 ]
+
+[profile.release]
+strip = true
+lto = true
+opt-level = 3
+
+[profile.profiling]
+inherits = "release"
+strip = false
+debug = true
