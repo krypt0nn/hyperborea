@@ -6,6 +6,12 @@ The key concept of the library is providing a decentralized DNS table and allowi
 
 This is achieved by providing two types of clients: a `Client` and a `Server`. Clients are, essentially, HTTP clients + secret key holders. They are making special HTTP requests to the servers to communicate with and through the network. Servers are HTTP servers, holding information about local/remote clients, remote servers and state of the network. This allows us to reuse one local server service on computer by different applications, or to use globally available servers if client can't expose its local server to the network.
 
+<img src="./network-structure.png">
+
+Here you can see two segments of the global network. Segment is a group of servers which can reach each other directly or through other servers. Potentially, these servers, depending on their configuration and implementation, will eventually find each other. Clients in this network can reach each other using `/api/v1/lookup` calls which will return local server's clients or give hint which will point to other servers which can be used to repeat this process.
+
+Clients in different network segments can't lookup each other. To resolve this issue they need to be connected to the servers within the same segment.
+
 # Servers REST API
 
 ## Status codes
