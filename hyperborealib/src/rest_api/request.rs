@@ -113,8 +113,8 @@ impl<T: AsJson> AsJson for Request<T> {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use super::*;
 
     #[test]

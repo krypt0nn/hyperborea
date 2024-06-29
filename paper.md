@@ -349,28 +349,46 @@ Send message to the connected client through its server.
 | Encoding | Description |
 | - | - |
 | `base64/aes256-gcm` | Base64-encoded value encrypted with [AES-256-GCM](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) |
-| `base64/chacha20poly1305` | Base64-encoded value encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
+| `base64/chacha20-poly1305` | Base64-encoded value encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
 
 #### With compression and encryption
 
 | Encoding | Description |
 | - | - |
 | `base64/aes256-gcm/deflate` | Base64-encoded value compressed with [deflate](https://en.wikipedia.org/wiki/Deflate) and encrypted with [AES-256-GCM](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) |
-| `base64/chacha20poly1305/deflate` | Base64-encoded value compressed with [deflate](https://en.wikipedia.org/wiki/Deflate) and encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
+| `base64/chacha20-poly1305/deflate` | Base64-encoded value compressed with [deflate](https://en.wikipedia.org/wiki/Deflate) and encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
+
+Operations order:
+
+1. Compression (if presented)
+2. Encryption (if presented)
+3. Encoding
 
 ### Types
 
 ```ts
+type Sender = {
+    client: Client,
+    server: Server
+};
+
+type Message = {
+    // Encoded message
+    content: string,
+
+    // Encoded sign of the message
+    sign: string,
+
+    // Encoding of the message and its sign
+    encoding: string
+};
+
 type SendRequest = Request<{
-    response_server: {
-        // Base64 encoded public key of the server
-        // the message's author is connected to
-        public_key: string,
+    // Client and server information about the
+    // message's author so we can send a response there
+    sender: Sender,
 
-        // Address of this server
-        address: string
-    },
-
+    // Information about the message's receiver
     receiver: {
         // Base64 encoded public key of the client
         // this message should be sent to
@@ -381,16 +399,8 @@ type SendRequest = Request<{
     // This is an arbitrary value needed for software development
     channel: string,
 
-    message: {
-        // Encoded message
-        content: string,
-
-        // Encoded sign of the message
-        sign: string,
-
-        // Encoding of the message and its sign
-        encoding: string
-    }
+    // The message itself
+    message: Message
 }>;
 
 type SendResponse = Response<()>;
@@ -414,39 +424,19 @@ type PollRequest = Request<{
     limit: number | null
 }>;
 
-type Message = {
+type MessageInfo = {
+    // Information about the client
+    // that sent this message
+    sender: Sender,
+
     // Channel to which this message was sent
     channel: string,
 
-    message: {
-        // Encoded message
-        content: string,
-
-        // Encoded sign of the message
-        sign: string,
-
-        // Encoding of the message and its sign
-        encoding: string
-    },
-
-    sender: {
-        client: {
-            // Base64 encoded public key of the message's author
-            public_key: string
-        },
-
-        server: {
-            // Base64 encoded public key of the server
-            // the message's author is connected to
-            public_key: string,
-
-            // Address of this server
-            address: string
-        }
-    }
+    // The message itself
+    message: Message
 };
 
 type PollResponse = Response<{
-    messages: Message[]
+    messages: MessageInfo[]
 }>;
 ```

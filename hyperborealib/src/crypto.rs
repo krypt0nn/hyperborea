@@ -142,7 +142,7 @@ impl SecretKey {
         Self::deserialize(base64_decode(base64)?)
     }
 
-    pub fn create_shared_secret(&self, public_key: &PublicKey, salt: Option<&[u8]>) -> [u8; 4096] {
+    pub fn create_shared_secret(&self, public_key: &PublicKey, salt: Option<&[u8]>) -> [u8; 32] {
         let diffie_hellman = k256::ecdh::diffie_hellman(
             self.0.to_nonzero_scalar(),
             public_key.0.as_affine()
@@ -150,10 +150,10 @@ impl SecretKey {
 
         let generator = diffie_hellman.extract::<k256::sha2::Sha256>(salt);
 
-        let mut secret = [0_u8; 4096];
-
-        // Must be fine because sha2's block length is 32 bytes
+        // sha2's block length is 32 bytes
         // so generator can do up to 8160 (32 * 255) bytes long secrets
+        let mut secret = [0_u8; 32];
+
         unsafe {
             generator.expand(&HKDF_INFO, &mut secret)
                 .unwrap_unchecked();
@@ -195,8 +195,8 @@ impl std::hash::Hash for SecretKey {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use super::*;
 
     #[test]

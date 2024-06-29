@@ -3,9 +3,9 @@ use serde_json::{json, Value as Json};
 use crate::rest_api::{AsJson, AsJsonError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ConnectResponseBody;
+pub struct SendResponseBody;
 
-impl ConnectResponseBody {
+impl SendResponseBody {
     #[inline]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
@@ -13,7 +13,7 @@ impl ConnectResponseBody {
     }
 }
 
-impl AsJson for ConnectResponseBody {
+impl AsJson for SendResponseBody {
     fn to_json(&self) -> Result<Json, AsJsonError> {
         Ok(json!({}))
     }
@@ -29,9 +29,9 @@ mod tests {
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        let response = ConnectResponseBody;
+        let response = SendResponseBody;
 
-        assert_eq!(ConnectResponseBody::from_json(&response.to_json()?)?, response);
+        assert_eq!(SendResponseBody::from_json(&response.to_json()?)?, response);
 
         Ok(())
     }
