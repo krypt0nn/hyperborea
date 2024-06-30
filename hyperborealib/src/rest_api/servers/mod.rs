@@ -1,8 +1,8 @@
 use serde_json::{json, Value as Json};
 
-use crate::rest_api::{AsJson, AsJsonError};
-
 use crate::crypto::PublicKey;
+
+use crate::rest_api::{AsJson, AsJsonError};
 
 use crate::STANDARD_VERSION;
 

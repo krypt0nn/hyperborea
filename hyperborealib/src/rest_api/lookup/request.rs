@@ -1,8 +1,7 @@
 use serde_json::{json, Value as Json};
 
-use crate::rest_api::{AsJson, AsJsonError};
-use crate::rest_api::connect::ClientType;
 use crate::crypto::PublicKey;
+use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LookupRequestBody {
