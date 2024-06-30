@@ -10,6 +10,7 @@ use super::{
     Server
 };
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BfsRecursionTraversal;
 
 #[async_trait::async_trait]

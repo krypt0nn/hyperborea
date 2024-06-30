@@ -420,13 +420,12 @@ Read data frames sent to the current client from the server.
 
 ```ts
 type PollRequest = Request<{
-    // Filter channel from which we want
+    // Channel from which we want
     // to read the inbox messages
-    // If null, then all the messages will be returned
-    channel: string | null,
+    channel: string,
 
     // Maximal number of messages to read
-    // If null, then all the messages will be returned
+    // If null, then decided by the server
     limit: number | null
 }>;
 
@@ -439,10 +438,16 @@ type MessageInfo = {
     channel: string,
 
     // The message itself
-    message: Message
+    message: Message,
+
+    // UTC timestamp at which this message was received
+    received_at: number
 };
 
 type PollResponse = Response<{
-    messages: MessageInfo[]
+    messages: MessageInfo[],
+
+    // Amount of remaining messages to read
+    remaining: number
 }>;
 ```

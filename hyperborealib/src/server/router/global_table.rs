@@ -16,6 +16,13 @@ pub struct GlobalTableRouter {
     pub servers: Cache<PublicKey, Server>
 }
 
+impl Default for GlobalTableRouter {
+    #[inline]
+    fn default() -> Self {
+        Self::new(1024, Duration::from_secs(60 * 30))
+    }
+}
+
 impl GlobalTableRouter {
     pub fn new(max_entries: u64, ttl: Duration) -> Self {
         #[cfg(feature = "tracing")]
@@ -24,17 +31,17 @@ impl GlobalTableRouter {
         Self {
             local_clients: Cache::builder()
                 .max_capacity(max_entries)
-                .time_to_live(ttl)
+                .time_to_idle(ttl)
                 .build(),
 
             remote_clients: Cache::builder()
                 .max_capacity(max_entries)
-                .time_to_live(ttl)
+                .time_to_idle(ttl)
                 .build(),
 
             servers: Cache::builder()
                 .max_capacity(max_entries)
-                .time_to_live(ttl)
+                .time_to_idle(ttl)
                 .build()
         }
     }

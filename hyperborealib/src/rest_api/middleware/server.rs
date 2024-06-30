@@ -32,20 +32,21 @@ use crate::rest_api::lookup::{
 /// 
 /// This struct is used to process HTTP REST API requests
 /// to the inner server driver.
-pub struct Server<HttpClient, HttpServer, Router, Traversal> {
-    driver: Arc<ServerDriver<Router, Traversal>>,
+pub struct Server<HttpClient, HttpServer, Router, Traversal, MessagesInbox> {
+    driver: Arc<ServerDriver<Router, Traversal, MessagesInbox>>,
     http_client: HttpClient,
     http_server: HttpServer
 }
 
-impl<T, F, Router, Traversal> Server<T, F, Router, Traversal>
+impl<T, F, Router, Traversal, MessagesInbox> Server<T, F, Router, Traversal, MessagesInbox>
 where
     T: HttpClient,
     F: HttpServer,
     Router: crate::server::router::Router + Send + Sync + 'static,
-    Traversal: crate::server::traversal::Traversal + Send + Sync + 'static
+    Traversal: crate::server::traversal::Traversal + Send + Sync + 'static,
+    MessagesInbox: crate::server::messages_inbox::MessagesInbox + Send + Sync + 'static,
 {
-    pub async fn new(http_client: T, mut http_server: F, server_driver: ServerDriver<Router, Traversal>) -> Self {
+    pub async fn new(http_client: T, mut http_server: F, server_driver: ServerDriver<Router, Traversal, MessagesInbox>) -> Self {
         #[cfg(feature = "tracing")]
         tracing::trace!(
             http_client_type = std::any::type_name::<T>(),
