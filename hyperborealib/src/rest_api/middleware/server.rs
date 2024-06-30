@@ -239,6 +239,47 @@ where
             }
         }).await;
 
+        http_server.post::<PollRequest, PollResponse, _>("/api/v1/poll", {
+            let driver = driver.clone();
+
+            |client_address, request| async move {
+                #[cfg(feature = "tracing")]
+                tracing::trace!(?client_address, "POST /api/v1/poll");
+
+                // Validate incoming request
+                let validated = match request.validate() {
+                    Ok(validated) => validated,
+
+                    Err(err) => return PollResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("An error occured during request validation: {err}")
+                    )
+                };
+
+                // Check if request is valid
+                if !validated {
+                    return PollResponse::error(
+                        ResponseStatus::RequestValidationFailed,
+                        "Request validation failed"
+                    );
+                }
+
+                // Poll messages from the inbox
+                let (messages, remaining) = driver.messages_inbox().poll_messages(
+                    request.0.public_key,
+                    request.0.request.channel,
+                    request.0.request.limit
+                ).await;
+
+                PollResponse::success(
+                    ResponseStatus::Success,
+                    &driver.params().server_secret,
+                    request.0.proof_seed,
+                    PollResponseBody::new(messages, remaining)
+                )
+            }
+        }).await;
+
         Self {
             http_client,
             http_server,
