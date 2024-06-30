@@ -264,16 +264,18 @@ impl<T: HttpClient + Send + Sync> Client<T> {
             "Sending POST /api/v1/send"
         );
 
-        // Send lookup request
+        // Send request
         let response = self.http_client.post_request::<SendRequest, SendResponse>(
             format!("http://{}/api/v1/send", server_address.as_ref()),
             request.clone()
         ).await?;
 
+        // Validate response
         if !response.validate(proof_seed)? {
             return Err(Error::InvalidProofSeedSignature);
         }
 
+        // Check response status
         if let Response::Error { status, reason, .. } = response.0 {
             return Err(Error::RequestFailed {
                 status,
@@ -282,5 +284,56 @@ impl<T: HttpClient + Send + Sync> Client<T> {
         }
 
         Ok(())
+    }
+
+    #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
+        server_address = server_address.as_ref(),
+        channel = channel.to_string(),
+        limit
+    )))]
+    /// Poll messages sent to the given client
+    /// 
+    /// This method will perform `POST /api/v1/poll` request.
+    /// 
+    /// Returns list of messages and amount of remained.
+    pub async fn poll(&self, server_address: impl AsRef<str>, channel: impl ToString, limit: Option<u64>) -> Result<(Vec<MessageInfo>, u64), Error> {
+        let request = PollRequest::new(self.driver.secret_key(), channel, limit);
+
+        let proof_seed = request.0.proof_seed;
+
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            server_address = server_address.as_ref(),
+            client_public = request.0.public_key.to_base64(),
+            "Sending POST /api/v1/poll"
+        );
+
+        // Send poll request
+        let response = self.http_client.post_request::<PollRequest, PollResponse>(
+            format!("http://{}/api/v1/poll", server_address.as_ref()),
+            request.clone()
+        ).await?;
+
+        // Validate response
+        if !response.validate(proof_seed)? {
+            return Err(Error::InvalidProofSeedSignature);
+        }
+
+        // Process response
+        match response.0 {
+            Response::Success { response, .. } => {
+                Ok((
+                    response.messages,
+                    response.remaining
+                ))
+            }
+
+            Response::Error { status, reason, .. } => {
+                Err(Error::RequestFailed {
+                    status,
+                    reason
+                })
+            }
+        }
     }
 }

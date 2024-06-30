@@ -75,6 +75,14 @@ pub mod prelude {
         SendResponseBody,
         Error as SendError
     };
+
+    pub use super::poll::{
+        MessageInfo,
+        PollRequest,
+        PollRequestBody,
+        PollResponse,
+        PollResponseBody
+    };
 }
 
 #[derive(Debug, thiserror::Error)]
