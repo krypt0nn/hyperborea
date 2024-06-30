@@ -6,26 +6,7 @@ use crate::http::server::HttpServer;
 
 use crate::server::Server as ServerDriver;
 
-use crate::rest_api::status::ResponseStatus;
-use crate::rest_api::info::InfoResponse;
-
-use crate::rest_api::clients::{
-    ClientsResponse,
-    Client as ClientApiRecord
-};
-
-use crate::rest_api::servers::ServersResponse;
-
-use crate::rest_api::connect::{
-    ConnectRequest,
-    ConnectResponse
-};
-
-use crate::rest_api::lookup::{
-    LookupRequest,
-    LookupResponse,
-    LookupResponseBody
-};
+use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, Hash)]
 /// Server HTTP middleware
@@ -131,7 +112,7 @@ where
                 }
 
                 // Index client in the routing table
-                let client = ClientApiRecord::new(
+                let client = Client::new(
                     request.0.public_key,
                     request.0.request.certificate,
                     request.0.request.client
@@ -213,6 +194,47 @@ where
                     &driver.params().server_secret,
                     request.0.proof_seed,
                     LookupResponseBody::hint(hint)
+                )
+            }
+        }).await;
+
+        http_server.post::<SendRequest, SendResponse, _>("/api/v1/send", {
+            let driver = driver.clone();
+
+            |client_address, request| async move {
+                #[cfg(feature = "tracing")]
+                tracing::trace!(?client_address, "POST /api/v1/send");
+
+                // Validate incoming request
+                let validated = match request.validate() {
+                    Ok(validated) => validated,
+
+                    Err(err) => return SendResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("An error occured during request validation: {err}")
+                    )
+                };
+
+                // Check if request is valid
+                if !validated {
+                    return SendResponse::error(
+                        ResponseStatus::RequestValidationFailed,
+                        "Request validation failed"
+                    );
+                }
+
+                // Add message to the inbox
+                driver.messages_inbox().add_message(
+                    request.0.request.sender,
+                    request.0.request.receiver_public,
+                    request.0.request.channel,
+                    request.0.request.message
+                ).await;
+
+                SendResponse::success(
+                    ResponseStatus::Success,
+                    &driver.params().server_secret,
+                    request.0.proof_seed
                 )
             }
         }).await;

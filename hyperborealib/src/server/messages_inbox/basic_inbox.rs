@@ -7,11 +7,11 @@ use crate::time::timestamp;
 use crate::crypto::PublicKey;
 use crate::rest_api::prelude::*;
 
-use super::{MessagesInbox, InboxRecord};
+use super::MessagesInbox;
 
 #[derive(Debug, Clone)]
 pub struct BasicInbox {
-    pub inbox: Cache<PublicKey, Vec<InboxRecord>>
+    pub inbox: Cache<PublicKey, Vec<MessageInfo>>
 }
 
 impl Default for BasicInbox {
@@ -48,7 +48,7 @@ impl MessagesInbox for BasicInbox {
         let mut inbox = self.inbox.get(&receiver).await
             .unwrap_or_default();
 
-        inbox.push(InboxRecord {
+        inbox.push(MessageInfo {
             sender,
             channel,
             message,
@@ -58,7 +58,7 @@ impl MessagesInbox for BasicInbox {
         self.inbox.insert(receiver, inbox).await;
     }
 
-    async fn poll_messages(&self, receiver: PublicKey, channel: String, limit: Option<usize>) -> (Vec<InboxRecord>, usize) {
+    async fn poll_messages(&self, receiver: PublicKey, channel: String, limit: Option<u64>) -> (Vec<MessageInfo>, u64) {
         #[cfg(feature = "tracing")]
         tracing::debug!(
             receiver = receiver.to_base64(),
@@ -72,7 +72,7 @@ impl MessagesInbox for BasicInbox {
 
         let mut messages = Vec::new();
 
-        let mut limit = limit.unwrap_or(inbox.len());
+        let mut limit = limit.unwrap_or(inbox.len() as u64);
         let mut i = 0;
 
         while inbox.len() > i && limit > 0 {
@@ -89,7 +89,7 @@ impl MessagesInbox for BasicInbox {
             }
         }
 
-        let ramined = inbox.len();
+        let ramined = inbox.len() as u64;
 
         self.inbox.insert(receiver, inbox).await;
 

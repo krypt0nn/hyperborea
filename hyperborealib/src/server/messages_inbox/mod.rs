@@ -4,14 +4,6 @@ use crate::rest_api::prelude::*;
 
 pub mod basic_inbox;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct InboxRecord {
-    pub sender: Sender,
-    pub channel: String,
-    pub message: Message,
-    pub received_at: u64
-}
-
 #[async_trait::async_trait]
 /// MessagesQueue is a struct that stores messages
 /// sent by external clients and meant to be read
@@ -23,5 +15,5 @@ pub trait MessagesInbox {
     /// Read client's inbox, applying given filters.
     /// 
     /// Return list of read messages and number of remained.
-    async fn poll_messages(&self, receiver: PublicKey, channel: String, limit: Option<usize>) -> (Vec<InboxRecord>, usize);
+    async fn poll_messages(&self, receiver: PublicKey, channel: String, limit: Option<u64>) -> (Vec<MessageInfo>, u64);
 }
