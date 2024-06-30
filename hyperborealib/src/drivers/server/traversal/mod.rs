@@ -1,7 +1,7 @@
 use crate::http::client::HttpClient;
 
 use super::router::Router;
-use super::Server;
+use super::ServerDriver;
 
 pub mod bfs_recursion;
 
@@ -11,5 +11,5 @@ pub mod bfs_recursion;
 /// to keep the updated state of the network servers.
 pub trait Traversal {
     /// Update network map using given server.
-    async fn traverse<T: Router + Sync>(&self, http_client: impl HttpClient, server: &Server<T>);
+    async fn traverse<T: Router + Sync>(&self, http_client: impl HttpClient, server: &ServerDriver<T>);
 }
