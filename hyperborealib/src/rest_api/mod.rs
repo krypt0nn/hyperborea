@@ -33,14 +33,33 @@ pub mod prelude {
     };
 
     pub use super::info::InfoResponse;
-    pub use super::clients::Client;
-    pub use super::servers::Server;
+
+    pub use super::clients::{
+        Client,
+        ClientsResponse
+    };
+
+    pub use super::servers::{
+        Server,
+        ServersResponse
+    };
 
     pub use super::connect::{
         ClientType,
         ClientInfo,
         ConnectionCertificate,
-        ConnectionToken
+        ConnectionToken,
+        ConnectRequest,
+        ConnectRequestBody,
+        ConnectResponse,
+        ConnectResponseBody
+    };
+
+    pub use super::lookup::{
+        LookupRequest,
+        LookupRequestBody,
+        LookupResponse,
+        LookupResponseBody
     };
 
     pub use super::send::{
@@ -50,6 +69,10 @@ pub mod prelude {
         MessageEncoding,
         Message,
         Sender,
+        SendRequest,
+        SendRequestBody,
+        SendResponse,
+        SendResponseBody,
         Error as SendError
     };
 }

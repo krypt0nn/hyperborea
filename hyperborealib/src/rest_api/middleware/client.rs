@@ -1,34 +1,13 @@
 use std::collections::{HashSet, VecDeque};
 
+use crate::crypto::PublicKey;
 use crate::http::client::HttpClient;
-
 use crate::client::Client as ClientDriver;
 
-use crate::crypto::PublicKey;
-
-use crate::rest_api::response::Response;
-use crate::rest_api::info::InfoResponse;
-
-use crate::rest_api::clients::{
-    ClientsResponse,
-    Client as ClientApiRecord
-};
-
-use crate::rest_api::servers::{
-    ServersResponse,
+use crate::rest_api::prelude::{
+    *,
+    Client as ClientApiRecord,
     Server as ServerApiRecord
-};
-
-use crate::rest_api::connect::{
-    ConnectRequest,
-    ConnectResponse,
-    ClientType
-};
-
-use crate::rest_api::lookup::{
-    LookupRequest,
-    LookupResponse,
-    LookupResponseBody
 };
 
 use super::Error;
@@ -67,7 +46,15 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     /// 
     /// This method will perform `GET /api/v1/info` request.
     pub async fn get_info(&self, server_address: impl AsRef<str>) -> Result<InfoResponse, Error> {
-        let response = self.http_client.get_request::<InfoResponse>(format!("http://{}/api/v1/info", server_address.as_ref())).await?;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            server_address = server_address.as_ref(),
+            "Sending GET /api/v1/info"
+        );
+
+        let response = self.http_client.get_request::<InfoResponse>(
+            format!("http://{}/api/v1/info", server_address.as_ref())
+        ).await?;
 
         if response.proof_seed < 1 << 63 {
             return Err(Error::InvalidProofSeed);
@@ -87,7 +74,15 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     /// 
     /// This method will perform `GET /api/v1/clients` request.
     pub async fn get_clients(&self, server_address: impl AsRef<str>) -> Result<Vec<ClientApiRecord>, Error> {
-        let response = self.http_client.get_request::<ClientsResponse>(format!("http://{}/api/v1/clients", server_address.as_ref())).await?;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            server_address = server_address.as_ref(),
+            "Sending GET /api/v1/clients"
+        );
+
+        let response = self.http_client.get_request::<ClientsResponse>(
+            format!("http://{}/api/v1/clients", server_address.as_ref())
+        ).await?;
 
         Ok(response.clients)
     }
@@ -99,7 +94,15 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     /// 
     /// This method will perform `GET /api/v1/servers` request.
     pub async fn get_servers(&self, server_address: impl AsRef<str>) -> Result<Vec<ServerApiRecord>, Error> {
-        let response = self.http_client.get_request::<ServersResponse>(format!("http://{}/api/v1/servers", server_address.as_ref())).await?;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            server_address = server_address.as_ref(),
+            "Sending GET /api/v1/servers"
+        );
+
+        let response = self.http_client.get_request::<ServersResponse>(
+            format!("http://{}/api/v1/servers", server_address.as_ref())
+        ).await?;
 
         Ok(response.servers)
     }
@@ -137,6 +140,13 @@ impl<T: HttpClient + Send + Sync> Client<T> {
 
         let proof_seed = request.0.proof_seed;
 
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            server_address = server_address.as_ref(),
+            client_public = request.0.public_key.to_base64(),
+            "Sending POST /api/v1/connect"
+        );
+
         let response = self.http_client.post_request::<ConnectRequest, ConnectResponse>(
             format!("http://{}/api/v1/connect", server_address.as_ref()),
             request
@@ -172,6 +182,8 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     pub async fn lookup(&self, server_address: impl ToString, client_public: PublicKey, client_type: Option<ClientType>) -> Result<Option<(ClientApiRecord, ServerApiRecord, bool)>, Error> {
         let request = LookupRequest::new(self.driver.secret_key(), client_public, client_type);
 
+        let proof_seed = request.0.proof_seed;
+
         let mut queue = VecDeque::from([
             server_address.to_string()
         ]);
@@ -184,10 +196,8 @@ impl<T: HttpClient + Send + Sync> Client<T> {
                 continue;
             }
 
-            let proof_seed = request.0.proof_seed;
-
             #[cfg(feature = "tracing")]
-            tracing::trace!(
+            tracing::debug!(
                 server_address,
                 client_public = request.0.public_key.to_base64(),
                 "Sending POST /api/v1/lookup"
@@ -230,5 +240,47 @@ impl<T: HttpClient + Send + Sync> Client<T> {
         }
 
         Ok(None)
+    }
+
+    #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
+        server_address = server_address.as_ref(),
+        client_public = client_public.to_base64(),
+        sender = ?sender,
+        channel = channel.to_string(),
+        message = ?message
+    )))]
+    /// Send message to the given client
+    /// 
+    /// This method will perform `POST /api/v1/send` request.
+    pub async fn send(&self, server_address: impl AsRef<str>, client_public: PublicKey, sender: Sender, channel: impl ToString, message: Message) -> Result<(), Error> {
+        let request = SendRequest::new(self.driver.secret_key(), sender, client_public, channel, message);
+
+        let proof_seed = request.0.proof_seed;
+
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            server_address = server_address.as_ref(),
+            client_public = request.0.public_key.to_base64(),
+            "Sending POST /api/v1/send"
+        );
+
+        // Send lookup request
+        let response = self.http_client.post_request::<SendRequest, SendResponse>(
+            format!("http://{}/api/v1/send", server_address.as_ref()),
+            request.clone()
+        ).await?;
+
+        if !response.validate(proof_seed)? {
+            return Err(Error::InvalidProofSeedSignature);
+        }
+
+        if let Response::Error { status, reason, .. } = response.0 {
+            return Err(Error::RequestFailed {
+                status,
+                reason
+            });
+        }
+
+        Ok(())
     }
 }
