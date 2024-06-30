@@ -2,12 +2,12 @@ use crate::crypto::SecretKey;
 use crate::rest_api::connect::ClientInfo;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Client {
+pub struct ClientDriver {
     info: ClientInfo,
     secret_key: SecretKey
 }
 
-impl Client {
+impl ClientDriver {
     #[inline]
     /// Build new client
     pub fn new(info: ClientInfo, secret_key: SecretKey) -> Self {

@@ -4,7 +4,7 @@ use std::sync::Arc;
 use crate::http::client::HttpClient;
 use crate::http::server::HttpServer;
 
-use crate::server::Server as ServerDriver;
+use crate::drivers::server::prelude::*;
 
 use crate::rest_api::prelude::*;
 
@@ -13,27 +13,33 @@ use crate::rest_api::prelude::*;
 /// 
 /// This struct is used to process HTTP REST API requests
 /// to the inner server driver.
-pub struct Server<HttpClient, HttpServer, Router, Traversal, MessagesInbox> {
-    driver: Arc<ServerDriver<Router, Traversal, MessagesInbox>>,
-    http_client: HttpClient,
-    http_server: HttpServer
+pub struct Server<HttpClientExt, HttpServerExt, RouterExt, TraversalExt, MessagesInboxExt> {
+    driver: Arc<ServerDriver<RouterExt, TraversalExt, MessagesInboxExt>>,
+    http_client: HttpClientExt,
+    http_server: HttpServerExt
 }
 
-impl<T, F, Router, Traversal, MessagesInbox> Server<T, F, Router, Traversal, MessagesInbox>
+impl<HttpClientExt, HttpServerExt, RouterExt, TraversalExt, MessagesInboxExt>
+    Server<HttpClientExt, HttpServerExt, RouterExt, TraversalExt, MessagesInboxExt>
 where
-    T: HttpClient,
-    F: HttpServer,
-    Router: crate::server::router::Router + Send + Sync + 'static,
-    Traversal: crate::server::traversal::Traversal + Send + Sync + 'static,
-    MessagesInbox: crate::server::messages_inbox::MessagesInbox + Send + Sync + 'static,
+    HttpClientExt: HttpClient,
+    HttpServerExt: HttpServer,
+    RouterExt: Router + Send + Sync + 'static,
+    TraversalExt: Traversal + Send + Sync + 'static,
+    MessagesInboxExt: MessagesInbox + Send + Sync + 'static,
 {
-    pub async fn new(http_client: T, mut http_server: F, server_driver: ServerDriver<Router, Traversal, MessagesInbox>) -> Self {
+    pub async fn new(
+        http_client: HttpClientExt,
+        mut http_server: HttpServerExt,
+        server_driver: ServerDriver<RouterExt, TraversalExt, MessagesInboxExt>
+    ) -> Self {
         #[cfg(feature = "tracing")]
         tracing::trace!(
-            http_client_type = std::any::type_name::<T>(),
-            http_server_type = std::any::type_name::<F>(),
-            router_type = std::any::type_name::<Router>(),
-            traversal_type = std::any::type_name::<Traversal>(),
+            http_client_type = std::any::type_name::<HttpClientExt>(),
+            http_server_type = std::any::type_name::<HttpServerExt>(),
+            router_type = std::any::type_name::<RouterExt>(),
+            traversal_type = std::any::type_name::<TraversalExt>(),
+            messages_inbox_type = std::any::type_name::<MessagesInboxExt>(),
             server_address = server_driver.params().server_address,
             server_secret = server_driver.params().server_secret.to_base64(),
             "Building server REST API middleware"

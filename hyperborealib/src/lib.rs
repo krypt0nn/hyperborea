@@ -1,9 +1,8 @@
-pub mod crypto;
-pub mod client;
-pub mod server;
-pub mod http;
-pub mod rest_api;
 pub mod time;
+pub mod crypto;
+pub mod http;
+pub mod drivers;
+pub mod rest_api;
 pub mod bucket;
 
 pub mod exports {

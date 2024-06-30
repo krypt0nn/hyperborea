@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 
 use crate::crypto::PublicKey;
 use crate::http::client::HttpClient;
-use crate::client::Client as ClientDriver;
+use crate::drivers::ClientDriver;
 
 use crate::rest_api::prelude::{
     *,

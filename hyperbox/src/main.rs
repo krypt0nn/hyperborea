@@ -7,14 +7,8 @@ use hyperborealib::crypto::PublicKey;
 
 use hyperborealib::client::Client;
 
-use hyperborealib::server::{Server, ServerParams};
-use hyperborealib::server::router::global_table::GlobalTableRouter;
-use hyperborealib::server::traversal::bfs_recursion::BfsRecursionTraversal;
-
-use hyperborealib::rest_api::middleware::Client as ClientMiddleware;
-use hyperborealib::rest_api::middleware::Server as ServerMiddleware;
-
-use hyperborealib::rest_api::connect::ClientType;
+use hyperborealib::server::prelude::*;
+use hyperborealib::rest_api::prelude::*;
 
 pub mod args;
 pub mod shell;
@@ -216,6 +210,7 @@ async fn main() -> anyhow::Result<()> {
                         let server = Server::new(
                             GlobalTableRouter::new(4096, std::time::Duration::from_secs(60 * 30)),
                             BfsRecursionTraversal,
+                            Me
                             ServerParams::default()
                         );
 

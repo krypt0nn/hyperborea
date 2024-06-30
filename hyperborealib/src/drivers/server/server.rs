@@ -1,4 +1,4 @@
-use crate::client::Client;
+use crate::drivers::ClientDriver;
 
 use crate::rest_api::connect::ClientInfo;
 
@@ -9,7 +9,7 @@ use super::messages_inbox::basic_inbox::BasicInbox;
 use super::params::ServerParams;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Server<
+pub struct ServerDriver<
     Router = GlobalTableRouter,
     Traversal = BfsRecursionTraversal,
     MessagesInbox = BasicInbox
@@ -20,7 +20,7 @@ pub struct Server<
     params: ServerParams
 }
 
-impl<Router, Traversal, MessagesInbox> Server<Router, Traversal, MessagesInbox>
+impl<Router, Traversal, MessagesInbox> ServerDriver<Router, Traversal, MessagesInbox>
 where
     Router: super::router::Router,
     Traversal: super::traversal::Traversal,
@@ -56,9 +56,9 @@ where
         &self.params
     }
 
-    /// Make `ClientInfo::Server` client from the current server
-    pub fn as_client(&self) -> Client {
-        Client::new(
+    /// Make `server` client driver from the current server
+    pub fn as_client(&self) -> ClientDriver {
+        ClientDriver::new(
             ClientInfo::server(&self.params.server_address),
             self.params.server_secret.clone()
         )
