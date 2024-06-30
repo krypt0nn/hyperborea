@@ -5,9 +5,9 @@ use hyperborealib::http::server::AxumHttpServer;
 
 use hyperborealib::crypto::PublicKey;
 
-use hyperborealib::client::Client;
+use hyperborealib::drivers::{ClientDriver, ServerDriver};
+use hyperborealib::drivers::server::prelude::*;
 
-use hyperborealib::server::prelude::*;
 use hyperborealib::rest_api::prelude::*;
 
 pub mod args;
@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
         Some("client") => {
             let shell = Shell::new("client$ ", true);
 
-            let client = Client::random();
+            let client = ClientDriver::random();
 
             let middleware = ClientMiddleware::new(
                 ReqwestHttpClient::default(),
@@ -207,10 +207,10 @@ async fn main() -> anyhow::Result<()> {
                     Some("exit") => break,
 
                     Some("start") => {
-                        let server = Server::new(
-                            GlobalTableRouter::new(4096, std::time::Duration::from_secs(60 * 30)),
+                        let server = ServerDriver::new(
+                            GlobalTableRouter::default(),
                             BfsRecursionTraversal,
-                            Me
+                            BasicInbox::default(),
                             ServerParams::default()
                         );
 
