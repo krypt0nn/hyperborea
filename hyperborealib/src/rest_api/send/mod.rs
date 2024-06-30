@@ -14,6 +14,7 @@ mod text_compression;
 mod message_encoding;
 mod message;
 mod sender;
+
 mod request;
 mod response;
 
@@ -85,14 +86,14 @@ impl AsJson for SendRequest {
 }
 
 impl SendResponse {
-    pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64, response_body: SendResponseBody) -> Self {
+    pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64) -> Self {
         let proof = server_secret.create_signature(proof_seed.to_be_bytes());
 
         Self(Response::success(
             status,
             server_secret.public_key(),
             proof,
-            response_body
+            SendResponseBody::new()
         ))
     }
 
