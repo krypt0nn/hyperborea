@@ -37,6 +37,14 @@ impl BasicInbox {
 #[async_trait::async_trait]
 impl MessagesInbox for BasicInbox {
     async fn add_message(&self, sender: Sender, receiver: PublicKey, channel: String, message: Message) {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            sender = ?sender,
+            receiver = receiver.to_base64(),
+            channel,
+            "Adding new message"
+        );
+
         let mut inbox = self.inbox.get(&receiver).await
             .unwrap_or_default();
 
@@ -51,6 +59,14 @@ impl MessagesInbox for BasicInbox {
     }
 
     async fn poll_messages(&self, receiver: PublicKey, channel: String, limit: Option<usize>) -> (Vec<InboxRecord>, usize) {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            receiver = receiver.to_base64(),
+            channel,
+            limit,
+            "Polling messages"
+        );
+
         let mut inbox = self.inbox.get(&receiver).await
             .unwrap_or_default();
 
