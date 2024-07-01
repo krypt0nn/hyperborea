@@ -18,8 +18,8 @@ use super::Error;
 /// This struct is used to perform HTTP REST API requests
 /// to the servers from the name of inner client driver.
 pub struct Client<T> {
-    driver: ClientDriver,
-    http_client: T
+    http_client: T,
+    driver: ClientDriver
 }
 
 impl<T: HttpClient + Send + Sync> Client<T> {
@@ -34,9 +34,19 @@ impl<T: HttpClient + Send + Sync> Client<T> {
         );
 
         Self {
-            driver: client_driver,
-            http_client
+            http_client,
+            driver: client_driver
         }
+    }
+
+    #[inline]
+    pub fn http_client(&self) -> &T {
+        &self.http_client
+    }
+
+    #[inline]
+    pub fn driver(&self) -> &ClientDriver {
+        &self.driver
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(

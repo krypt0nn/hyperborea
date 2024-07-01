@@ -14,9 +14,9 @@ use crate::rest_api::prelude::*;
 /// This struct is used to process HTTP REST API requests
 /// to the inner server driver.
 pub struct Server<HttpClientExt, HttpServerExt, RouterExt, TraversalExt, MessagesInboxExt> {
-    driver: Arc<ServerDriver<RouterExt, TraversalExt, MessagesInboxExt>>,
     http_client: HttpClientExt,
-    http_server: HttpServerExt
+    http_server: HttpServerExt,
+    driver: Arc<ServerDriver<RouterExt, TraversalExt, MessagesInboxExt>>
 }
 
 impl<HttpClientExt, HttpServerExt, RouterExt, TraversalExt, MessagesInboxExt>
@@ -291,6 +291,21 @@ where
             http_server,
             driver
         }
+    }
+
+    #[inline]
+    pub fn http_client(&self) -> &HttpClientExt {
+        &self.http_client
+    }
+
+    #[inline]
+    pub fn http_server(&self) -> &HttpServerExt {
+        &self.http_server
+    }
+
+    #[inline]
+    pub fn driver(&self) -> Arc<ServerDriver<RouterExt, TraversalExt, MessagesInboxExt>> {
+        self.driver.clone()
     }
 
     #[inline]
