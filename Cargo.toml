@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "hyperborealib",
     "hyperborea-server",
-    "hyperbox"
+    "hyperbox",
+    "hyperchat"
 ]
 
 [profile.release]
