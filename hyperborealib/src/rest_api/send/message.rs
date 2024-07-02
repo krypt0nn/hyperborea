@@ -6,6 +6,7 @@ use crate::rest_api::{AsJson, AsJsonError};
 use super::{MessageEncoding, Error};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     pub content: String,
     pub sign: String,

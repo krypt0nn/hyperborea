@@ -9,9 +9,12 @@ license = "AGPL-3.0"
 edition = "2021"
 
 [features]
+serde = ["k256/serde"]
 tracing = ["dep:tracing"]
 client-reqwest = ["dep:reqwest"]
 server-axum = ["dep:axum", "dep:tokio"]
+
+default-features = ["serde", "tracing"]
 
 [dependencies]
 thiserror = "1.0"

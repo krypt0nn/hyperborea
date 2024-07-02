@@ -5,6 +5,7 @@ use crate::crypto::PublicKey;
 use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SendRequestBody {
     pub sender: Sender,
     pub receiver_public: PublicKey,

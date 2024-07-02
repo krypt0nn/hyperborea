@@ -8,6 +8,7 @@ use crate::rest_api::prelude::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Sender {
     pub client: Client,
     pub server: Server

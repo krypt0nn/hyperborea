@@ -5,6 +5,7 @@ use crate::rest_api::prelude::*;
 use crate::time::timestamp;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageInfo {
     pub sender: Sender,
     pub channel: String,

@@ -17,6 +17,7 @@ use super::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Request<T> {
     pub standard: u64,
     pub public_key: PublicKey,

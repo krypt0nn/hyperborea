@@ -26,9 +26,11 @@ pub use request::ConnectRequestBody;
 pub use response::ConnectResponseBody;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectRequest(pub Request<ConnectRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectResponse(pub Response<ConnectResponseBody>);
 
 impl ConnectRequest {

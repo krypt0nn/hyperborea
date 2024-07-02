@@ -13,6 +13,7 @@ use crate::crypto::{
 use crate::STANDARD_VERSION;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InfoResponse {
     pub standard: u64,
     pub public_key: PublicKey,

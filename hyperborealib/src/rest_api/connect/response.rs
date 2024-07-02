@@ -3,6 +3,7 @@ use serde_json::{json, Value as Json};
 use crate::rest_api::{AsJson, AsJsonError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectResponseBody;
 
 impl ConnectResponseBody {

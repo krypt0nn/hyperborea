@@ -6,6 +6,7 @@ use flate2::write::{DeflateEncoder, DeflateDecoder};
 use super::Error;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TextCompression {
     #[default]
     None,

@@ -14,9 +14,11 @@ pub use request::LookupRequestBody;
 pub use response::LookupResponseBody;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LookupRequest(pub Request<LookupRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LookupResponse(pub Response<LookupResponseBody>);
 
 impl LookupRequest {

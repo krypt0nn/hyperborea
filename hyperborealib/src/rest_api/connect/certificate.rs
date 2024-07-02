@@ -13,6 +13,7 @@ use crate::crypto::{
 use crate::time::timestamp;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectionToken {
     /// Timestamp of the client connection request
     pub auth_date: u64,
@@ -54,6 +55,7 @@ impl ConnectionToken {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectionCertificate {
     pub token: ConnectionToken,
     pub sign: Vec<u8>

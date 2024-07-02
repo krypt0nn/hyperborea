@@ -7,6 +7,7 @@ use crate::rest_api::{AsJson, AsJsonError};
 use crate::STANDARD_VERSION;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Server {
     pub public_key: PublicKey,
     pub address: String
@@ -47,6 +48,7 @@ impl AsJson for Server {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ServersResponse {
     pub standard: u64,
     pub servers: Vec<Server>

@@ -3,6 +3,7 @@ use serde_json::{json, Value as Json};
 use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PollResponseBody {
     pub messages: Vec<MessageInfo>,
     pub remaining: u64

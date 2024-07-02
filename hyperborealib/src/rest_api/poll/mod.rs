@@ -15,9 +15,11 @@ pub use request::*;
 pub use response::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PollRequest(pub Request<PollRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PollResponse(pub Response<PollResponseBody>);
 
 impl PollRequest {

@@ -6,6 +6,7 @@ use super::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageEncoding {
     pub encoding: TextEncoding,
     pub encryption: TextEncryption,

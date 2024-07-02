@@ -3,6 +3,7 @@ use crate::crypto::{base64_encode, base64_decode};
 use super::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TextEncoding {
     Base64
 }

@@ -3,6 +3,7 @@ use serde_json::{json, Value as Json};
 use crate::rest_api::{AsJson, AsJsonError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ClientType {
     Thin,
     Thick,
@@ -44,6 +45,7 @@ impl TryFrom<&str> for ClientType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ClientInfo {
     pub client_type: ClientType,
     pub address: Option<String>

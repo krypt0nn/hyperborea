@@ -11,6 +11,7 @@ use super::certificate::ConnectionCertificate;
 use super::client_info::ClientInfo;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectRequestBody {
     pub certificate: ConnectionCertificate,
     pub client: ClientInfo

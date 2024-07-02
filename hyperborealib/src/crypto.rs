@@ -5,6 +5,7 @@ use k256::ecdsa::signature::{Signer, Verifier};
 
 use base64::Engine;
 use base64::engine::GeneralPurpose as Base64Engine;
+use serde::ser::SerializeStruct;
 
 lazy_static::lazy_static! {
     pub static ref BASE64: Base64Engine = Base64Engine::new(
@@ -45,6 +46,7 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PublicKey(k256::PublicKey);
 
 impl PublicKey {
@@ -192,6 +194,48 @@ impl SecretKey {
 impl std::hash::Hash for SecretKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.serialize().hash(state);
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SecretKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        let mut sec = serializer.serialize_struct("SecretKey", 1)?;
+
+        sec.serialize_field("0", &self.serialize())?;
+
+        sec.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for SecretKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'de> {
+        use serde::de::Error;
+
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = Vec<u8>;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(formatter, "bytes sequence expected")
+            }
+
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+            where E: serde::de::Error {
+                Ok(v.to_vec())
+            }
+        }
+
+        let secret_key = deserializer.deserialize_struct("SecretKey", &["0"], Visitor)?;
+
+        let secret_key = SecretKey::deserialize(secret_key)
+            .map_err(D::Error::custom)?;
+
+        Ok(secret_key)
     }
 }
 

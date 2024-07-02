@@ -6,6 +6,7 @@ use crate::rest_api::clients::Client as ClientApiRecord;
 use crate::rest_api::servers::Server as ServerApiRecord;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum LookupResponseBody {
     Local {
         client: ClientApiRecord,
