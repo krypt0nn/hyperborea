@@ -1,6 +1,6 @@
 # Network architecture
 
-The goal of the protocol is to provide a general way to resolve addresses (domain names or IP) of decentralized network clients by their public symmetric encryption keys. Protocol provides basic instruments to connect to the network, lookup clients, send and receive messages through it.
+The goal of the protocol is to provide a general way to resolve addresses (domain names or IP) of decentralized network clients by their public asymmetrical encryption keys. Protocol provides basic instruments to connect to the network, lookup clients, send and receive messages through it.
 
 The key concept of the library is providing a decentralized DNS table and allowing different applications and computers to reuse the same endpoint (service) to search through the network and send/receive messages.
 

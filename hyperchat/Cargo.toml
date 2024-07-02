@@ -9,7 +9,7 @@ license = "GPL-3.0"
 edition = "2021"
 
 [dependencies]
-hyperborealib = { path = "../hyperborealib", features = ["client-reqwest", "server-axum", "tracing"] }
+hyperborealib = { path = "../hyperborealib", features = ["client-reqwest", "server-axum", "tracing", "serde"] }
 
 tokio = { version = "1.38", features = ["full"] }
 

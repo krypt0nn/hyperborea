@@ -20,7 +20,8 @@ pub struct Params {
     pub room_name: String,
     pub room_username: String,
     pub room_lookup_delay: u64,
-    pub room_sync_delay: u64
+    pub room_sync_delay: u64,
+    pub room_encoding: String
 }
 
 impl Default for Params {
@@ -39,7 +40,8 @@ impl Default for Params {
             room_name: format!("Room #{}", safe_random_u64() % 9000 + 1000),
             room_username: format!("User #{}", safe_random_u64() % 9000 + 1000),
             room_lookup_delay: 15,
-            room_sync_delay: 1000
+            room_sync_delay: 1000,
+            room_encoding: String::from("base64/chacha20-poly1305")
         }
     }
 }
@@ -71,7 +73,8 @@ pub async fn read() -> anyhow::Result<Params> {
         room_name: params["room"]["name"].as_str().unwrap().to_string(),
         room_username: params["room"]["username"].as_str().unwrap().to_string(),
         room_lookup_delay: params["room"]["lookup_delay"].as_u64().unwrap(),
-        room_sync_delay: params["room"]["sync_delay"].as_u64().unwrap()
+        room_sync_delay: params["room"]["sync_delay"].as_u64().unwrap(),
+        room_encoding: params["room"]["encoding"].as_str().unwrap().to_string()
     })
 }
 
@@ -94,7 +97,8 @@ pub async fn write(params: &Params) -> anyhow::Result<()> {
             "name": params.room_name,
             "username": params.room_username,
             "lookup_delay": params.room_lookup_delay,
-            "sync_delay": params.room_sync_delay
+            "sync_delay": params.room_sync_delay,
+            "encoding": params.room_encoding
         }
     }))?;
 
