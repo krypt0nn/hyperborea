@@ -29,12 +29,10 @@ pub async fn process<T: HttpClient, F: std::future::Future<Output = anyhow::Resu
             Ok(content) => content,
 
             Err(err) => {
-                log::warn!(
-                    "[process] failed to verify message: {err}. Client: {}, server: {} ({})",
-                    message.sender.client.public_key.to_base64(),
-                    message.sender.server.public_key.to_base64(),
-                    message.sender.server.address
-                );
+                log::warn!("[server/process] Failed to verify message");
+                log::warn!("[server/process]   Client : {}", message.sender.client.public_key.to_base64());
+                log::warn!("[server/process]   Server : {} ({})", message.sender.server.public_key.to_base64(), message.sender.server.address);
+                log::warn!("[server/process]   Reason : {err}");
 
                 continue;
             }
@@ -45,12 +43,10 @@ pub async fn process<T: HttpClient, F: std::future::Future<Output = anyhow::Resu
             Ok(request) => request,
 
             Err(err) => {
-                log::warn!(
-                    "[process] failed to deserialize message: {err}. Client: {}, server: {} ({})",
-                    message.sender.client.public_key.to_base64(),
-                    message.sender.server.public_key.to_base64(),
-                    message.sender.server.address
-                );
+                log::warn!("[server/process] Failed to deserialize message");
+                log::warn!("[server/process]   Client : {}", message.sender.client.public_key.to_base64());
+                log::warn!("[server/process]   Server : {} ({})", message.sender.server.public_key.to_base64(), message.sender.server.address);
+                log::warn!("[server/process]   Reason : {err}");
 
                 continue;
             }

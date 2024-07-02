@@ -17,15 +17,12 @@ pub async fn process_joins<T: HttpClient>(
     chat_sender: &Sender,
     users: Arc<Mutex<Vec<(Sender, String)>>>
 ) -> anyhow::Result<()> {
-    process(client, params, chat_sender, "hyperchat/join", |request, info| async move {
+    process(client, params, chat_sender, "hyperchat/requests/join", |request, info| async move {
         // Parse request fields
         let Some(username) = request["username"].as_str() else {
-            log::warn!(
-                "[join] wrong request format: no username field given. Client: {}, server: {} ({})",
-                info.sender.client.public_key.to_base64(),
-                info.sender.server.public_key.to_base64(),
-                info.sender.server.address
-            );
+            log::warn!("[server/join] Wrong request format: no username field given");
+            log::warn!("[server/join]   Client : {}", info.sender.client.public_key.to_base64());
+            log::warn!("[server/join]   Server : {} ({})", info.sender.server.public_key.to_base64(), info.sender.server.address);
 
             return Ok(None);
         };
@@ -36,7 +33,7 @@ pub async fn process_joins<T: HttpClient>(
             .collect::<String>();
 
         // Announce other users about newcomer
-        log::info!("[join] {username} joins room");
+        log::info!("[server/join] '{username}' joins room");
 
         let join_announcement = serde_json::to_string(&json!({
             "client": info.sender.client,
@@ -67,17 +64,16 @@ pub async fn process_joins<T: HttpClient>(
                 &user.server.address,
                 user.client.public_key.clone(),
                 chat_sender.clone(),
-                "hyperchat/join",
+                "hyperchat/announcements/join",
                 message
             ).await;
 
             if let Err(err) = result {
-                log::info!(
-                    "[join] failed to send join announcement to the client: {err}. Removing from the users list. Client: {}, server: {} ({})",
-                    info.sender.client.public_key.to_base64(),
-                    info.sender.server.public_key.to_base64(),
-                    info.sender.server.address
-                );
+                log::info!("[server/join] Failed to send join announcement to the client");
+                log::info!("[server/join] Removing client from the members list");
+                log::info!("[server/join]   Client : {}", info.sender.client.public_key.to_base64());
+                log::info!("[server/join]   Server : {} ({})", info.sender.server.public_key.to_base64(), info.sender.server.address);
+                log::info!("[server/join]   Reason : {err}");
 
                 users.remove(i);
             }
