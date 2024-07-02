@@ -4,7 +4,7 @@ use hyperborealib::rest_api::prelude::*;
 pub mod params;
 pub mod client;
 pub mod server;
-pub mod chat_server;
+pub mod api;
 pub mod chat_ui;
 
 #[tokio::main]
