@@ -5,7 +5,6 @@ use k256::ecdsa::signature::{Signer, Verifier};
 
 use base64::Engine;
 use base64::engine::GeneralPurpose as Base64Engine;
-use serde::ser::SerializeStruct;
 
 lazy_static::lazy_static! {
     pub static ref BASE64: Base64Engine = Base64Engine::new(
