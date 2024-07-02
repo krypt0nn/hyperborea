@@ -14,7 +14,7 @@ tracing = ["dep:tracing"]
 client-reqwest = ["dep:reqwest"]
 server-axum = ["dep:axum", "dep:tokio"]
 
-default-features = ["serde", "tracing"]
+default = ["serde", "tracing"]
 
 [dependencies]
 thiserror = "1.0"

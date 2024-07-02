@@ -200,6 +200,8 @@ impl std::hash::Hash for SecretKey {
 impl serde::Serialize for SecretKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where S: serde::Serializer {
+        use serde::ser::SerializeStruct;
+
         let mut sec = serializer.serialize_struct("SecretKey", 1)?;
 
         sec.serialize_field("0", &self.serialize())?;
