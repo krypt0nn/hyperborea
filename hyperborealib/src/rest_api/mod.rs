@@ -86,6 +86,15 @@ pub mod prelude {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum ValidationError {
+    #[error("Proof seed must be a 64 bit long unsigned integer")]
+    InvalidSeed,
+
+    #[error(transparent)]
+    CryptographyError(#[from] CryptographyError)
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum AsJsonError {
     #[error("Invalid standard version: {0}")]
     InvalidStandard(u64),
@@ -107,15 +116,6 @@ pub enum AsJsonError {
 
     #[error(transparent)]
     Other(#[from] Box<dyn std::error::Error>)
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum ValidationError {
-    #[error("Proof seed must be a 64 bit long unsigned integer")]
-    InvalidSeed,
-
-    #[error(transparent)]
-    CryptographyError(#[from] CryptographyError)
 }
 
 pub trait AsJson {
