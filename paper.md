@@ -264,7 +264,7 @@ type ConnectRequest = Request<{
     client: ClientInfo
 }>;
 
-type ConnectResponse = Response<()>;
+type ConnectResponse = Response<void>;
 ```
 
 ## `POST /api/v1/lookup`
@@ -292,6 +292,7 @@ type LookupRequest = Request<{
 // Lookup client is connected to the current server
 type LookupResponseLocal = {
     disposition: 'local',
+
     result: {
         // Local client info
         client: Client,
@@ -305,6 +306,7 @@ type LookupResponseLocal = {
 // Lookup client is connected to remote server
 type LookupResponseRemote = {
     disposition: 'remote',
+
     result: {
         // Remote client info
         client: Client,
@@ -330,6 +332,43 @@ type LookupResponseHint = {
 };
 
 type LookupResponse = Response<LookupResponseLocal | LookupResponseRemote | LookupResponseRemoteHint>;
+```
+
+## `POST /api/v1/announce`
+
+Announce a client-server pair or just a server to another server.
+
+It is expected that a client or a server will run this request over its known remote servers if the server can be accessed globally through the Internet.
+
+If this method is not called, then (depending on implementation) other servers will not be aware of you, and would not be able to perform lookup requests on your server's local clients.
+
+### Types
+
+```ts
+type AnnounceRequestClient = {
+    announce: 'client',
+
+    // Information about the client
+    client: Client,
+
+    // Server to which the client is connected
+    server: Server,
+
+    // Certificate that proves that the client
+    // is connected to the given server
+    certificate: ConnectionCertificate
+};
+
+type AnnounceRequestServer = {
+    announce: 'server',
+
+    // Information about the server
+    server: Server
+};
+
+type AnnounceRequest = Request<AnnounceRequestClient | AnnounceRequestServer>;
+
+type AnnounceResponse = Response<void>;
 ```
 
 ## `POST /api/v1/send`
@@ -409,7 +448,7 @@ type SendRequest = Request<{
     message: Message
 }>;
 
-type SendResponse = Response<()>;
+type SendResponse = Response<void>;
 ```
 
 ## `POST /api/v1/poll`
