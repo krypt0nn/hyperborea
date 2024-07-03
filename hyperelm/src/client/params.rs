@@ -5,7 +5,7 @@ use hyperborealib::drivers::prelude::*;
 use hyperborealib::rest_api::prelude::*;
 
 #[derive(Debug, Clone)]
-pub struct ClientParams {
+pub struct ClientAppParams {
     /// Current client.
     pub client: ClientDriver,
 
@@ -22,15 +22,15 @@ pub struct ClientParams {
     pub delay: Duration
 }
 
-impl ClientParams {
+impl ClientAppParams {
     #[inline]
-    pub fn builder() -> ClientParamsBuilder {
-        ClientParamsBuilder::default()
+    pub fn builder() -> ClientAppParamsBuilder {
+        ClientAppParamsBuilder::default()
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct ClientParamsBuilder {
+pub struct ClientAppParamsBuilder {
     /// Current client.
     pub client: Option<ClientDriver>,
 
@@ -47,7 +47,7 @@ pub struct ClientParamsBuilder {
     pub delay: Duration
 }
 
-impl Default for ClientParamsBuilder {
+impl Default for ClientAppParamsBuilder {
     fn default() -> Self {
         Self {
             client: None,
@@ -63,7 +63,7 @@ impl Default for ClientParamsBuilder {
     }
 }
 
-impl ClientParamsBuilder {
+impl ClientAppParamsBuilder {
     pub fn client(mut self, secret_key: SecretKey) -> Self {
         self.client = Some(ClientDriver::thin(secret_key));
 
@@ -76,8 +76,8 @@ impl ClientParamsBuilder {
             BfsRecursionTraversal,
             BasicInbox::default(),
             ServerParams {
-                server_secret: secret_key,
-                server_address: address.to_string()
+                secret_key,
+                address: address.to_string()
             }
         ));
 
@@ -102,8 +102,8 @@ impl ClientParamsBuilder {
         self
     }
 
-    pub fn build(self) -> Option<ClientParams> {
-        Some(ClientParams {
+    pub fn build(self) -> Option<ClientAppParams> {
+        Some(ClientAppParams {
             client: self.client?,
             server: self.server?,
             channel: self.channel,

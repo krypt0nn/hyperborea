@@ -49,7 +49,7 @@ pub trait ClientApp {
 
     type Error: std::error::Error;
 
-    fn get_params(&self) -> &ClientParams;
+    fn get_params(&self) -> &ClientAppParams;
     fn get_middlewire(&self) -> &ClientMiddleware<Self::HttpClient>;
 
     /// Get certificate that proves that the client is connected
@@ -59,7 +59,7 @@ pub trait ClientApp {
 
         ConnectionCertificate::new(
             params.client.secret_key(),
-            params.server.params().server_secret.public_key()
+            params.server.params().secret_key.public_key()
         )
     }
 
@@ -74,8 +74,8 @@ pub trait ClientApp {
         );
 
         let server = Server::new(
-            params.server.params().server_secret.public_key(),
-            &params.server.params().server_address
+            params.server.params().secret_key.public_key(),
+            &params.server.params().address
         );
 
         Sender::new(client, server)
@@ -175,7 +175,7 @@ pub trait ClientApp {
 
         let server = params.server.params();
 
-        let (messages, _) = middlewire.poll(&server.server_address, &params.channel, None).await?;
+        let (messages, _) = middlewire.poll(&server.address, &params.channel, None).await?;
 
         for message_info in messages {
             // Decode the message and verify its validity

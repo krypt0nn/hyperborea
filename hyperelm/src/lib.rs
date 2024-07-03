@@ -1,13 +1,19 @@
 pub mod client;
+pub mod server;
 
 pub mod prelude {
     pub use hyperborealib;
 
     pub use super::client::{
-        ClientParams,
+        ClientAppParams,
         ClientEndpoint,
         ClientApp,
         ClientAppError
+    };
+
+    pub use super::server::{
+        ServerApp,
+        ServerAppParams
     };
 
     pub use super::build_client;

@@ -56,7 +56,7 @@
 ///         };
 ///     );
 /// 
-///     fn get_params(&self) ->  &ClientParams {
+///     fn get_params(&self) ->  &ClientAppParams {
 ///         todo!()
 ///     }
 ///
