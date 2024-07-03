@@ -3,6 +3,7 @@
     "conventionalCommits.scopes": [
         "hyperborealib",
         "hyperbox",
-        "hyperchat"
+        "hyperchat",
+        "hyperelm"
     ]
 }

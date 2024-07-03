@@ -1,0 +1,28 @@
+[package]
+name = "hyperelm"
+version = "0.1.0"
+description = "Elm-inspired high-level abstraction over the hyperborealib intended for applications development"
+authors = ["Nikita Podvirnyi <krypt0nn@vk.com>"]
+homepage = "https://github.com/krypt0nn/hyperborea/hyperelm"
+repository = "https://github.com/krypt0nn/hyperborea"
+license = "GPL-3.0"
+edition = "2021"
+
+[features]
+tracing = ["dep:tracing"]
+
+default = ["tracing"]
+
+[dependencies]
+hyperborealib = { path = "../hyperborealib", features = ["client-reqwest", "server-axum"] }
+
+thiserror = "1.0"
+
+async-trait = "0.1"
+tokio = { version = "1.38", features = ["rt-multi-thread", "macros"] }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Tracing feature
+tracing = { version = "0.1", optional = true }

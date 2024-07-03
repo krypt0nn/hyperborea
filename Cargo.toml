@@ -4,6 +4,7 @@ members = [
     "hyperborealib",
     "hyperborea-server",
     "hyperbox",
+    "hyperelm",
     "hyperchat"
 ]
 
