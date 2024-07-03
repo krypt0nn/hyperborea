@@ -1,7 +1,3 @@
-use client::ClientParams;
-
-use hyperborealib::rest_api::prelude::*;
-
 pub mod client;
 
 pub mod prelude {
