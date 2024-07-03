@@ -3,9 +3,11 @@ use hyperborealib::rest_api::prelude::*;
 
 mod params;
 mod app;
+mod basic_app;
 
 pub use params::*;
 pub use app::*;
+pub use basic_app::*;
 
 /// Start given server application in tokio async thread,
 /// returning back an `Arc` containing original variant

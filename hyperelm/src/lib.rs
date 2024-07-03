@@ -13,7 +13,8 @@ pub mod prelude {
 
     pub use super::server::{
         ServerApp,
-        ServerAppParams
+        ServerAppParams,
+        BasicServerApp
     };
 
     pub use super::build_client;
