@@ -127,22 +127,22 @@ pub trait AsJson {
 macro_rules! impl_as_json {
     ($( $type:ty )*) => {
         $(
-            impl AsJson for $type {
-                fn to_json(&self) -> Result<Json, AsJsonError> {
+            impl $crate::rest_api::AsJson for $type {
+                fn to_json(&self) -> Result<serde_json::Value, $crate::rest_api::AsJsonError> {
                     Ok(serde_json::to_value(())?)
                 }
 
-                fn from_json(json: &Json) -> Result<Self, AsJsonError> where Self: Sized {
+                fn from_json(json: &serde_json::Value) -> Result<Self, AsJsonError> where Self: Sized {
                     Ok(serde_json::from_value(json.clone())?)
                 }
             }
 
-            impl AsJson for Vec<$type> {
-                fn to_json(&self) -> Result<Json, AsJsonError> {
+            impl $crate::rest_api::AsJson for Vec<$type> {
+                fn to_json(&self) -> Result<serde_json::Value, $crate::rest_api::AsJsonError> {
                     Ok(serde_json::to_value(())?)
                 }
 
-                fn from_json(json: &Json) -> Result<Self, AsJsonError> where Self: Sized {
+                fn from_json(json: &serde_json::Value) -> Result<Self, AsJsonError> where Self: Sized {
                     Ok(serde_json::from_value(json.clone())?)
                 }
             }
