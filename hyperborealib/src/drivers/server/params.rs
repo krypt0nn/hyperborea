@@ -2,15 +2,20 @@ use crate::crypto::SecretKey;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ServerParams {
-    pub server_secret: SecretKey,
-    pub server_address: String
+    pub secret_key: SecretKey,
+
+    /// Globally accessible address of this server.
+    /// 
+    /// This is needed when we perform requests
+    /// from the server as a `server(addresss)` client.
+    pub address: String
 }
 
 impl Default for ServerParams {
     fn default() -> Self {
         Self {
-            server_secret: SecretKey::random(),
-            server_address: String::from("localhost:80")
+            secret_key: SecretKey::random(),
+            address: String::from("localhost:8001")
         }
     }
 }

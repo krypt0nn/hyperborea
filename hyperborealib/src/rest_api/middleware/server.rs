@@ -40,8 +40,8 @@ where
             router_type = std::any::type_name::<RouterExt>(),
             traversal_type = std::any::type_name::<TraversalExt>(),
             messages_inbox_type = std::any::type_name::<MessagesInboxExt>(),
-            server_address = server_driver.params().server_address,
-            server_secret = server_driver.params().server_secret.to_base64(),
+            server_address = server_driver.params().address,
+            server_secret = server_driver.params().secret_key.to_base64(),
             "Building server REST API middleware"
         );
 
@@ -54,7 +54,7 @@ where
                 #[cfg(feature = "tracing")]
                 tracing::trace!(?client_address, "GET /api/v1/info");
 
-                InfoResponse::new(&driver.params().server_secret)
+                InfoResponse::new(&driver.params().secret_key)
             }
         }).await;
 
@@ -100,7 +100,7 @@ where
                 tracing::trace!(?client_address, "POST /api/v1/connect");
 
                 // Validate incoming request
-                let validated = match request.validate(&driver.params().server_secret.public_key()) {
+                let validated = match request.validate(&driver.params().secret_key.public_key()) {
                     Ok(validated) => validated,
 
                     Err(err) => return ConnectResponse::error(
@@ -135,7 +135,7 @@ where
 
                 ConnectResponse::success(
                     ResponseStatus::Success,
-                    &driver.params().server_secret,
+                    &driver.params().secret_key,
                     request.0.proof_seed
                 )
             }
@@ -172,7 +172,7 @@ where
 
                     return LookupResponse::success(
                         ResponseStatus::Success,
-                        &driver.params().server_secret,
+                        &driver.params().secret_key,
                         request.0.proof_seed,
                         body
                     );
@@ -184,7 +184,7 @@ where
 
                     return LookupResponse::success(
                         ResponseStatus::Success,
-                        &driver.params().server_secret,
+                        &driver.params().secret_key,
                         request.0.proof_seed,
                         body
                     );
@@ -197,7 +197,7 @@ where
 
                 LookupResponse::success(
                     ResponseStatus::Success,
-                    &driver.params().server_secret,
+                    &driver.params().secret_key,
                     request.0.proof_seed,
                     LookupResponseBody::hint(hint)
                 )
@@ -239,7 +239,7 @@ where
 
                 SendResponse::success(
                     ResponseStatus::Success,
-                    &driver.params().server_secret,
+                    &driver.params().secret_key,
                     request.0.proof_seed
                 )
             }
@@ -279,7 +279,7 @@ where
 
                 PollResponse::success(
                     ResponseStatus::Success,
-                    &driver.params().server_secret,
+                    &driver.params().secret_key,
                     request.0.proof_seed,
                     PollResponseBody::new(messages, remaining)
                 )

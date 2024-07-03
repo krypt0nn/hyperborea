@@ -59,8 +59,8 @@ where
     /// Make `server` client driver from the current server
     pub fn as_client(&self) -> ClientDriver {
         ClientDriver::new(
-            ClientInfo::server(&self.params.server_address),
-            self.params.server_secret.clone()
+            ClientInfo::server(&self.params.address),
+            self.params.secret_key.clone()
         )
     }
 }
