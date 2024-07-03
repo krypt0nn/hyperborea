@@ -15,7 +15,7 @@ impl Default for ServerParams {
     fn default() -> Self {
         Self {
             secret_key: SecretKey::random(),
-            address: String::from("localhost:8001")
+            address: String::from("127.0.0.1:8001")
         }
     }
 }
