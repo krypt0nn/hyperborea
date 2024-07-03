@@ -123,6 +123,7 @@ pub trait AsJson {
     fn from_json(json: &Json) -> Result<Self, AsJsonError> where Self: Sized;
 }
 
+#[macro_export]
 macro_rules! impl_as_json {
     ($( $type:ty )*) => {
         $(
