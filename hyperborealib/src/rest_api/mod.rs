@@ -132,7 +132,7 @@ macro_rules! impl_as_json {
                     Ok(serde_json::to_value(())?)
                 }
 
-                fn from_json(json: &serde_json::Value) -> Result<Self, AsJsonError> where Self: Sized {
+                fn from_json(json: &serde_json::Value) -> Result<Self, $crate::rest_api::AsJsonError> where Self: Sized {
                     Ok(serde_json::from_value(json.clone())?)
                 }
             }
@@ -142,7 +142,7 @@ macro_rules! impl_as_json {
                     Ok(serde_json::to_value(())?)
                 }
 
-                fn from_json(json: &serde_json::Value) -> Result<Self, AsJsonError> where Self: Sized {
+                fn from_json(json: &serde_json::Value) -> Result<Self, $crate::rest_api::AsJsonError> where Self: Sized {
                     Ok(serde_json::from_value(json.clone())?)
                 }
             }
