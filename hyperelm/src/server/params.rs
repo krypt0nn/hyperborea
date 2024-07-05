@@ -3,6 +3,7 @@ use std::time::Duration;
 use hyperborealib::crypto::SecretKey;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ServerAppParams {
     /// Current server's secret key.
     pub secret_key: SecretKey,

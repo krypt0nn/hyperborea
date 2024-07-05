@@ -9,9 +9,10 @@ license = "GPL-3.0"
 edition = "2021"
 
 [features]
-tracing = ["dep:tracing"]
+serde = ["hyperborealib/serde"]
+tracing = ["hyperborealib/tracing", "dep:tracing"]
 
-default = ["tracing"]
+default = ["serde", "tracing"]
 
 [dependencies]
 hyperborealib = { path = "../hyperborealib", features = ["client-reqwest", "server-axum"] }

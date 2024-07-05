@@ -1,6 +1,7 @@
 use hyperborealib::crypto::PublicKey;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ClientEndpoint {
     pub server_address: String,
     pub client_public: PublicKey
