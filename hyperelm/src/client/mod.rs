@@ -13,7 +13,10 @@ pub use app::*;
 /// returning back an `Arc` containing original variant
 /// of the client to perform `send` and `request` calls.
 pub async fn run<T>(app: T) -> Arc<T>
-where T: ClientApp + Send + Sync + 'static {
+where
+    T: ClientApp + Send + Sync + 'static,
+    T::Error: std::fmt::Display
+{
     let client = Arc::new(app);
 
     {

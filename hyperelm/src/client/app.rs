@@ -46,11 +46,12 @@ pub trait ClientApp {
     type OutputMessage: AsJson + Send;
 
     type HttpClient: HttpClient;
-
-    type Error: std::error::Error;
+    type State;
+    type Error;
 
     fn get_params(&self) -> &ClientAppParams;
     fn get_middlewire(&self) -> &ClientMiddleware<Self::HttpClient>;
+    fn get_state(&self) -> Arc<Self::State>;
 
     /// Get certificate that proves that the client is connected
     /// to the given server.

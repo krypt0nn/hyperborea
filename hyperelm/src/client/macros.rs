@@ -38,7 +38,7 @@
 ///         output: OutReq => OutResp, OutMsg;
 /// 
 ///         client: hyperborealib::http::ReqwestHttpClient;
-/// 
+///         state: ();
 ///         error: std::io::Error;
 /// 
 ///         requests: {
@@ -61,6 +61,10 @@
 ///     }
 ///
 ///     fn get_middlewire(&self) ->  &ClientMiddleware<Self::HttpClient>  {
+///         todo!()
+///     }
+/// 
+///     fn get_state(&self) -> Arc<Self::State> {
 ///         todo!()
 ///     }
 /// }
@@ -88,6 +92,12 @@ macro_rules! build_client {
         build_client!( $( $tail )* );
     };
 
+    (state: $state:ty; $( $tail:tt )*) => {
+        type State = $state;
+
+        build_client!( $( $tail )* );
+    };
+
     (error: $error:ty; $( $tail:tt )*) => {
         type Error = $error;
 
@@ -110,7 +120,7 @@ macro_rules! build_client {
             Self: 'async_trait
         {
             match request {
-                $( $request => Box::pin($handler), )*
+                $( $request => Box::pin(($handler)(self.get_state(), info)), )*
 
                 #[allow(unreachable_patterns)]
                 _ => unimplemented!()
@@ -134,7 +144,7 @@ macro_rules! build_client {
             Self: 'async_trait
         {
             match message {
-                $( $message => Box::pin($handler), )*
+                $( $message => Box::pin(($handler)(self.get_state(), info)), )*
 
                 #[allow(unreachable_patterns)]
                 _ => unimplemented!()
