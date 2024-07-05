@@ -12,6 +12,8 @@ pub use basic_app::*;
 /// Start given server application in tokio async thread,
 /// returning back an `Arc` containing original variant
 /// of the server.
+/// 
+/// This method will freeze caller's thread while server app is running.
 pub async fn run<T>(app: T) -> Result<(), T::Error>
 where T: ServerApp + Send + Sync + 'static {
     let params = app.get_params();

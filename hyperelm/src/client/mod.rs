@@ -12,6 +12,8 @@ pub use app::*;
 /// Start given client application in tokio async thread,
 /// returning back an `Arc` containing original variant
 /// of the client to perform `send` and `request` calls.
+/// 
+/// This method doesn't freeze the caller's thread.
 pub async fn run<T>(app: T) -> Arc<T>
 where
     T: ClientApp + Send + Sync + 'static,
