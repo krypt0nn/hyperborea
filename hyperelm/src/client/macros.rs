@@ -2,10 +2,12 @@
 /// Implement boilerplate types and methods to the ClientApp trait.
 /// 
 /// ```rust
+/// use std::sync::Arc;
+/// 
 /// use hyperelm::prelude::*;
 /// use hyperelm::exports::*;
 /// 
-/// use hyperborealib::rest_api::prelude::ClientMiddleware;
+/// use hyperborealib::rest_api::prelude::*;
 /// 
 /// #[derive(serde::Serialize, serde::Deserialize)]
 /// enum InReq { Ping }
@@ -39,17 +41,18 @@
 /// 
 ///         client: hyperborealib::http::ReqwestHttpClient;
 ///         state: ();
-///         error: std::io::Error;
+///         error: ();
 /// 
 ///         requests: {
-///             InReq::Ping => async {
+///             InReq::Ping => |_, _| async {
 ///                 Ok(InResp::Pong)
 ///             }
 ///         };
 /// 
 ///         messages: {
-///             InMsg::Msg(msg) => async move {
+///             InMsg::Msg(msg) => |_, info: MessageInfo| async move {
 ///                 println!("Message: {msg}");
+///                 println!("Sender: {}", info.sender.client.public_key.to_base64());
 /// 
 ///                 Ok(())
 ///             }

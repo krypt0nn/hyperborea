@@ -38,7 +38,7 @@ impl<T> ServerApp for T where T: BasicServerApp {
     type HttpClient = ReqwestHttpClient;
     type HttpServer = AxumHttpServer;
 
-    type Error = std::io::Error;
+    type Error = ();
 
     #[inline]
     fn get_router(&self) -> Result<Self::Router, Self::Error>  {

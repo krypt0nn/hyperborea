@@ -13,7 +13,7 @@ pub trait ServerApp {
     type HttpClient: HttpClient + Send + Sync + 'static;
     type HttpServer: HttpServer + Send + Sync + 'static;
 
-    type Error: std::error::Error + Send;
+    type Error: Send;
 
     fn get_router(&self) -> Result<Self::Router, Self::Error>;
     fn get_traversal(&self) -> Result<Self::Traversal, Self::Error>;
