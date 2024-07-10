@@ -451,6 +451,18 @@ type SendRequest = Request<{
 type SendResponse = Response<void>;
 ```
 
+> Note that it's expected that the sender client is connected to the server
+> reachable by the global network, and that the `sender.server` field is correct.
+> It's still possible to give any arbitrary data there, and its filtering
+> purely depends on the standard implementation in software.
+> For example, a library can try to request `/api/v1/info` to check that the server is real.
+> 
+> Another option is to give there a loopback address of the server. E.g., if
+> some client send a message to another client's server, it can specify this
+> server as the `sender.server` so the response will be sent to the same server.
+> This case should also be covered by the implementation purely - some servers
+> may allow this behavior, some (publicly available) would like to avoid this.
+
 ## `POST /api/v1/poll`
 
 Read data frames sent to the current client from the server.
