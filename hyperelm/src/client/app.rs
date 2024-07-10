@@ -59,8 +59,8 @@ pub trait ClientApp {
         let params = self.get_params();
 
         ConnectionCertificate::new(
-            params.client.secret_key(),
-            params.server.params().secret_key.public_key()
+            &params.client_secret,
+            params.server_public.clone()
         )
     }
 
@@ -69,14 +69,14 @@ pub trait ClientApp {
         let params = self.get_params();
 
         let client = Client::new(
-            params.client.secret_key().public_key(),
+            params.client_secret.public_key(),
             self.get_certificate(),
             ClientInfo::thin()
         );
 
         let server = Server::new(
-            params.server.params().secret_key.public_key(),
-            &params.server.params().address
+            params.server_public.clone(),
+            &params.server_address
         );
 
         Sender::new(client, server)
@@ -84,7 +84,7 @@ pub trait ClientApp {
 
     /// Perform client searching in the network.
     async fn lookup(&self, public_key: PublicKey, client_type: Option<ClientType>) -> Result<Option<ClientEndpoint>, ClientAppError<Self::Error>> {
-        let server_address = &self.get_params().server.params().address;
+        let server_address = &self.get_params().server_address;
 
         let result = self.get_middlewire()
             .lookup(server_address, public_key, client_type).await?
@@ -113,7 +113,7 @@ pub trait ClientApp {
 
         // Send request
         let request = Message::create(
-            params.client.secret_key(),
+            &params.client_secret,
             &endpoint.client_public,
             serde_json::to_vec(&request)?,
             params.encoding
@@ -139,7 +139,7 @@ pub trait ClientApp {
             if let Some(message) = messages.first() {
                 // Decode the message and verify its validity
                 let response = message.message.read(
-                    params.client.secret_key(),
+                    &params.client_secret,
                     &message.sender.client.public_key
                 )?;
 
@@ -167,7 +167,7 @@ pub trait ClientApp {
         });
 
         let message = Message::create(
-            params.client.secret_key(),
+            &params.client_secret,
             &endpoint.client_public,
             serde_json::to_vec(&message)?,
             params.encoding
@@ -190,14 +190,12 @@ pub trait ClientApp {
         let params = self.get_params();
         let middlewire = self.get_middlewire();
 
-        let server = params.server.params();
-
-        let (messages, _) = middlewire.poll(&server.address, &params.channel, None).await?;
+        let (messages, _) = middlewire.poll(&params.server_address, &params.channel, None).await?;
 
         for message_info in messages {
             // Decode the message and verify its validity
             let content = message_info.message.read(
-                params.client.secret_key(),
+                &params.client_secret,
                 &message_info.sender.client.public_key
             )?;
 
@@ -215,7 +213,7 @@ pub trait ClientApp {
 
                     // Send response
                     let response = Message::create(
-                        params.client.secret_key(),
+                        &params.client_secret,
                         &message_info.sender.client.public_key,
                         serde_json::to_vec(&response.to_json()?)?,
                         params.encoding

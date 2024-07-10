@@ -29,8 +29,8 @@ where
 
     // Try connecting to the application's server
     app.get_middlewire().connect_to(
-        &params.server.params().address,
-        params.server.params().secret_key.public_key()
+        &params.server_address,
+        params.server_public.clone()
     ).await?;
 
     // Start background updates task
