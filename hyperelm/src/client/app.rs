@@ -82,6 +82,22 @@ pub trait ClientApp {
         Sender::new(client, server)
     }
 
+    /// Perform client searching in the network.
+    async fn lookup(&self, public_key: PublicKey, client_type: Option<ClientType>) -> Result<Option<ClientEndpoint>, ClientAppError<Self::Error>> {
+        let server_address = &self.get_params().server.params().address;
+
+        let result = self.get_middlewire()
+            .lookup(server_address, public_key, client_type).await?
+            .map(|(client, server, _)| {
+                ClientEndpoint {
+                    server_address: server.address,
+                    client_public: client.public_key
+                }
+            });
+
+        Ok(result)
+    }
+
     /// Send request to given endpoint.
     async fn request(&self, endpoint: ClientEndpoint, request: Self::OutputRequest) -> Result<Self::OutputResponse, ClientAppError<Self::Error>> {
         let params = self.get_params();

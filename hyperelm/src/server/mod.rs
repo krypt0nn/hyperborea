@@ -15,7 +15,10 @@ pub use basic_app::*;
 /// 
 /// This method will freeze caller's thread while server app is running.
 pub async fn run<T>(app: T) -> Result<(), T::Error>
-where T: ServerApp + Send + Sync + 'static {
+where
+    T: ServerApp + Send + Sync + 'static,
+    T::Error: std::fmt::Debug
+{
     let params = app.get_params();
 
     // Create client middlewire for traversal thread
@@ -25,7 +28,7 @@ where T: ServerApp + Send + Sync + 'static {
     );
 
     // Resolve server middlewire and driver
-    let middlewire = app.get_middlewire().await?;
+    let middlewire = app.get_middlewire().await.unwrap();
     let driver = middlewire.driver();
 
     // Start the server
