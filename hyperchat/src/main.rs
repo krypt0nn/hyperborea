@@ -120,10 +120,14 @@ async fn main() -> anyhow::Result<()> {
                 };
             });
 
+            // Wait a little before connecting to the server
+            // so it's ready to handle incoming requests
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
             hyperelm::client::run(hoster_app).await?;
 
-            // Stop the server
-            server.abort();
+            // Await until the server is closed (crashed)
+            server.await?;
         }
 
         Some(command) => eprintln!("Unknown command: {command}"),
