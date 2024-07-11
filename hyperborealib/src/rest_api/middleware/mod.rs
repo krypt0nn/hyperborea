@@ -29,5 +29,5 @@ pub enum Error {
     },
 
     #[error(transparent)]
-    Other(#[from] Box<dyn std::error::Error>)
+    Other(#[from] Box<dyn std::error::Error + Send + Sync>)
 }

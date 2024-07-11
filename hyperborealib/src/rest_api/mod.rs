@@ -115,7 +115,7 @@ pub enum AsJsonError {
     SerdeJsonError(#[from] serde_json::Error),
 
     #[error(transparent)]
-    Other(#[from] Box<dyn std::error::Error>)
+    Other(#[from] Box<dyn std::error::Error + Send + Sync>)
 }
 
 pub trait AsJson {

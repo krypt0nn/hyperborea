@@ -11,13 +11,13 @@ pub struct Response {
 #[async_trait::async_trait]
 pub trait HttpClient: Clone + Send + Sync {
     /// Send HTTP GET request
-    async fn get(&self, url: impl AsRef<str> + Send) -> Result<Response, Box<dyn std::error::Error>>;
+    async fn get(&self, url: impl AsRef<str> + Send) -> Result<Response, Box<dyn std::error::Error + Send + Sync>>;
 
     /// Send HTTP POST request with JSON body
-    async fn post(&self, url: impl AsRef<str> + Send, body: Json) -> Result<Response, Box<dyn std::error::Error>>;
+    async fn post(&self, url: impl AsRef<str> + Send, body: Json) -> Result<Response, Box<dyn std::error::Error + Send + Sync>>;
 
     /// Perform GET REST API request
-    async fn get_request<T: AsJson>(&self, url: impl AsRef<str> + Send) -> Result<T, Box<dyn std::error::Error>> {
+    async fn get_request<T: AsJson>(&self, url: impl AsRef<str> + Send) -> Result<T, Box<dyn std::error::Error + Send + Sync>> {
         #[cfg(feature = "tracing")]
         tracing::trace!(
             url = url.as_ref(),
@@ -44,7 +44,7 @@ pub trait HttpClient: Clone + Send + Sync {
     }
 
     /// Perform POST REST API request
-    async fn post_request<T: AsJson + Send, F: AsJson>(&self, url: impl AsRef<str> + Send, request: T) -> Result<F, Box<dyn std::error::Error>> {
+    async fn post_request<T: AsJson + Send, F: AsJson>(&self, url: impl AsRef<str> + Send, request: T) -> Result<F, Box<dyn std::error::Error + Send + Sync>> {
         let request = request.to_json()?;
 
         #[cfg(feature = "tracing")]
@@ -90,7 +90,7 @@ impl Default for ReqwestHttpClient {
 #[cfg(feature = "client-reqwest")]
 #[async_trait::async_trait]
 impl HttpClient for ReqwestHttpClient {
-    async fn get(&self, url: impl AsRef<str> + Send) -> Result<Response, Box<dyn std::error::Error>> {
+    async fn get(&self, url: impl AsRef<str> + Send) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
         let response = self.0.get(url.as_ref())
             .send().await
             .map_err(Box::new)?;
@@ -106,7 +106,7 @@ impl HttpClient for ReqwestHttpClient {
         })
     }
 
-    async fn post(&self, url: impl AsRef<str> + Send, body: Json) -> Result<Response, Box<dyn std::error::Error>> {
+    async fn post(&self, url: impl AsRef<str> + Send, body: Json) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
         let response = self.0.post(url.as_ref())
             .json(&body)
             .send().await
