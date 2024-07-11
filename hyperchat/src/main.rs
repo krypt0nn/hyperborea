@@ -35,9 +35,11 @@ async fn main() -> anyhow::Result<()> {
             // Run local server in background
             println!("Starting local server...");
 
-            //tokio::spawn(async move {
-                hyperelm::server::run(server_app).await;
-            //});
+            let server = tokio::spawn(async move {
+                if let Err(err) = hyperelm::server::run(server_app).await {
+                    log::error!("Server closed: {err:?}");
+                };
+            });
 
             // Wait a little before connecting to the server
             // so it's ready to handle incoming requests
@@ -77,6 +79,9 @@ async fn main() -> anyhow::Result<()> {
 
                 tokio::time::sleep(std::time::Duration::from_secs(params.room_lookup_delay)).await;
             }
+
+            // Stop the server
+            server.abort();
         }
 
         Some("server") => {
@@ -109,10 +114,16 @@ async fn main() -> anyhow::Result<()> {
             let server_app = ServerApp::from_params(params.clone());
             let hoster_app = ChatHosterApp::from_params(&params)?;
 
-            tokio::select!(
-                _ = hyperelm::server::run(server_app) => {},
-                _ = hyperelm::client::run(hoster_app) => {}
-            );
+            let server = tokio::spawn(async move {
+                if let Err(err) = hyperelm::server::run(server_app).await {
+                    log::error!("Server closed: {err:?}");
+                };
+            });
+
+            hyperelm::client::run(hoster_app).await?;
+
+            // Stop the server
+            server.abort();
         }
 
         Some(command) => eprintln!("Unknown command: {command}"),
