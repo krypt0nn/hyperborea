@@ -1,11 +1,16 @@
+use hyperelm::exports::hyperborealib;
+use hyperelm::client::ClientApp;
+
 use hyperborealib::crypto::*;
 use hyperborealib::rest_api::prelude::*;
 
 pub mod params;
 pub mod client;
 pub mod server;
-pub mod api;
 pub mod chat_ui;
+
+use client::*;
+use server::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -24,29 +29,25 @@ async fn main() -> anyhow::Result<()> {
 
             let chat_server = PublicKey::from_base64(chat_server)?;
 
-            // Create client middlewire
-            let client = client::new(&params).await?;
+            let server_app = ServerApp::from_params(params.clone());
+            let member_app = ChatMemberApp::from_params(&params)?;
 
             // Run local server in background
             println!("Starting local server...");
 
-            let server = {
-                let params = params.clone();
-
-                tokio::spawn(async move {
-                    server::run(&params).await
-                })
-            };
+            //tokio::spawn(async move {
+                hyperelm::server::run(server_app).await;
+            //});
 
             // Wait a little before connecting to the server
             // so it's ready to handle incoming requests
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
-            // Connect to the local server
-            println!("Connecting to the local server...");
+            // Run chat member client
+            println!("Starting chat client app...");
 
-            client.connect(&params.server_local_address).await
-                .map_err(|err| anyhow::anyhow!(err.to_string()))?;
+            let client = hyperelm::client::run(member_app).await
+                .map_err(|err| anyhow::anyhow!("Failed to connect to the local server: {err}"))?;
 
             // Lookup chat room server through the network
             println!("Looking up given chat room server...");
@@ -56,23 +57,16 @@ async fn main() -> anyhow::Result<()> {
                 // This method returns error only if initial lookup
                 // request failed, which means we failed to request
                 // our own local server - which is definitely bad
-                let result = client.lookup(
-                    &params.server_local_address,
-                    chat_server.clone(),
-                    Some(ClientType::Server)
-                ).await.map_err(|err| anyhow::anyhow!(err.to_string()))?;
+                let result = client.lookup(chat_server.clone(), Some(ClientType::Thin)).await
+                    .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 
-                if let Some((chat_client, chat_server, _available)) = result {
-                    println!("Chat room server found");
-                    println!("  Client public key : {}", chat_client.public_key.to_base64());
-                    println!("  Server public key : {}", chat_server.public_key.to_base64());
-                    println!("  Server address    : {}", &chat_server.address);
+                if let Some(chat_hoster) = result {
+                    println!("Chat room found");
+                    println!("  Client public key : {}", chat_hoster.client_public.to_base64());
+                    println!("  Server address    : {}", &chat_hoster.server_address);
 
                     // Start chat UI
                     chat_ui::run().await?;
-
-                    // Stop server when the UI is closed
-                    server.abort();
 
                     // Stop chat room lookup loop
                     break;
@@ -99,15 +93,26 @@ async fn main() -> anyhow::Result<()> {
                 .parse_default_env()
                 .init();
 
-            // Print info about the server
+            // Print info about the chat room
+            let server_secret = SecretKey::from_base64(&params.server_secret)?;
+            let room_secret = SecretKey::from_base64(&params.room_secret_key)?;
+
             log::info!("Starting chat room server");
-            log::info!("  Public key      : {}", SecretKey::from_base64(&params.server_secret)?.public_key().to_base64());
-            log::info!("  Local address   : {}", &params.server_local_address);
-            log::info!("  Exposed address : {}", &params.server_exposed_address);
+            log::info!("  Server public key : {}", server_secret.public_key().to_base64());
+            log::info!("  Room public key   : {}", room_secret.public_key().to_base64());
+            log::info!("  Local address     : {}", &params.server_local_address);
+            log::info!("  Exposed address   : {}", &params.server_exposed_address);
+            log::info!("  Room name         : {}", &params.room_name);
             log::info!("");
 
-            // Start local HTTP REST API server
-            server::run(&params).await?;
+            // Start local HTTP REST API server and chat room hoster client
+            let server_app = ServerApp::from_params(params.clone());
+            let hoster_app = ChatHosterApp::from_params(&params)?;
+
+            tokio::select!(
+                _ = hyperelm::server::run(server_app) => {},
+                _ = hyperelm::client::run(hoster_app) => {}
+            );
         }
 
         Some(command) => eprintln!("Unknown command: {command}"),

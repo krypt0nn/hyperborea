@@ -1,5 +1,7 @@
 use serde_json::{json, Value as Json};
 
+use hyperelm::prelude::*;
+
 use hyperborealib::crypto::{
     SecretKey,
     safe_random_u64
@@ -8,6 +10,8 @@ use hyperborealib::crypto::{
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Params {
     pub client_secret: String,
+    pub client_server_public: String,
+    pub client_server_address: String,
 
     pub server_secret: String,
     pub server_local_address: String,
@@ -28,10 +32,12 @@ impl Default for Params {
     fn default() -> Self {
         Self {
             client_secret: SecretKey::random().to_base64(),
+            client_server_public: String::from("<globally available server's public key>"),
+            client_server_address: String::from("<globally available address>"),
 
             server_secret: SecretKey::random().to_base64(),
             server_local_address: String::from("127.0.0.1:51234"),
-            server_exposed_address: String::from("<you have to edit this>"),
+            server_exposed_address: String::from("<globally available address>"),
 
             bootstrap_addresses: Vec::new(),
             bootstrap_traversal_delay: 60 * 5,
@@ -56,6 +62,8 @@ pub async fn read() -> anyhow::Result<Params> {
 
     Ok(Params {
         client_secret: params["client"]["secret_key"].as_str().unwrap().to_string(),
+        client_server_public: params["client"]["server_public"].as_str().unwrap().to_string(),
+        client_server_address: params["client"]["server_address"].as_str().unwrap().to_string(),
 
         server_secret: params["server"]["secret_key"].as_str().unwrap().to_string(),
         server_local_address: params["server"]["local_address"].as_str().unwrap().to_string(),
@@ -81,7 +89,9 @@ pub async fn read() -> anyhow::Result<Params> {
 pub async fn write(params: &Params) -> anyhow::Result<()> {
     let params = serde_json::to_string_pretty(&json!({
         "client": {
-            "secret_key": params.client_secret
+            "secret_key": params.client_secret,
+            "server_public": params.client_server_public,
+            "server_address": params.client_server_address
         },
         "server": {
             "secret_key": params.server_secret,
