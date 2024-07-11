@@ -164,7 +164,7 @@ macro_rules! impl_as_json {
         $(
             impl $crate::rest_api::AsJson for $type {
                 fn to_json(&self) -> Result<serde_json::Value, $crate::rest_api::AsJsonError> {
-                    Ok(serde_json::to_value(())?)
+                    Ok(serde_json::to_value(self)?)
                 }
 
                 fn from_json(json: &serde_json::Value) -> Result<Self, $crate::rest_api::AsJsonError> where Self: Sized {
