@@ -37,19 +37,19 @@ pub enum Error {
     InvalidMessageSignature,
 
     #[error("Failed to decode text: {0}")]
-    TextDecodingError(#[source] Box<dyn std::error::Error>),
+    TextDecodingError(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("Failed to encrypt text: {0}")]
-    TextEncryptionFailed(#[source] Box<dyn std::error::Error>),
+    TextEncryptionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("Failed to decrypt text: {0}")]
-    TextDecryptionFailed(#[source] Box<dyn std::error::Error>),
+    TextDecryptionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("Failed to compress text: {0}")]
-    TextCompressionFailed(#[source] Box<dyn std::error::Error>),
+    TextCompressionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("Failed to decompress text: {0}")]
-    TextDecompressionFailed(#[source] Box<dyn std::error::Error>),
+    TextDecompressionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error(transparent)]
     CryptographyError(#[from] CryptographyError)
