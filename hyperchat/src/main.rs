@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
                     println!("  Server address    : {}", &chat_hoster.server_address);
 
                     // Start chat UI
-                    chat_ui::run().await?;
+                    chat_ui::run(client, chat_hoster, params).await?;
 
                     // Stop chat room lookup loop
                     break;

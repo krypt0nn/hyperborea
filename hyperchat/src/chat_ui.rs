@@ -1,3 +1,9 @@
+const MAX_CHAT_MESSAGES_COUNT: usize = 128;
+
+use std::sync::Arc;
+
+use tokio::sync::Mutex;
+
 use ratatui::prelude::*;
 use ratatui::widgets::*;
 
@@ -21,7 +27,14 @@ use ratatui::crossterm::event::{
 
 use tui_textarea::TextArea;
 
-pub async fn run() -> anyhow::Result<()> {
+use hyperelm::prelude::*;
+
+use crate::params::Params;
+use crate::*;
+
+pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: Params) -> anyhow::Result<()> {
+    // TUI
+
     enable_raw_mode()?;
 
     std::io::stdout().execute(EnterAlternateScreen)?;
@@ -35,7 +48,73 @@ pub async fn run() -> anyhow::Result<()> {
 
     message_widget.set_placeholder_text("Type a message...");
 
+    // Logic
+
+    let mut last_history_id = 0;
+
+    let chat_messages_widgets = Arc::new(Mutex::new(Vec::new()));
+    let chat_members = ();
+
+    tokio::spawn({
+        let client = client.clone();
+        let endpoint = endpoint.clone();
+
+        let chat_messages_widgets = chat_messages_widgets.clone();
+
+        async move {
+            loop {
+                // TODO: handle errors
+                let response = client.request(endpoint.clone(), ChatMemberRequest::GetHistory {
+                    since_id: last_history_id
+                }).await;
+
+                if let Ok(ChatHosterResponse::History { history }) = response {
+                    let mut chat_messages_widgets = chat_messages_widgets.lock().await;
+
+                    for record in history {
+                        match &record.body {
+                            ChatHistoryBlockBody::MemberJoin { public_key, username } => {
+                                let widget = Line::from(format!("[{username}] joined chat"))
+                                    .centered()
+                                    .yellow();
+
+                                chat_messages_widgets.push(widget);
+                            }
+
+                            ChatHistoryBlockBody::MemberLeave { public_key } => {
+                                let widget = Line::from(format!("[{}] left chat", public_key.to_base64()))
+                                    .centered()
+                                    .yellow();
+
+                                chat_messages_widgets.push(widget);
+                            }
+
+                            ChatHistoryBlockBody::MemberSendMessage { public_key, message } => {
+                                let widget = Line::from(format!("[{}] : {message}", public_key.to_base64()));
+
+                                chat_messages_widgets.push(widget);
+                            }
+                        }
+
+                        last_history_id = record.id;
+                    }
+
+                    while chat_messages_widgets.len() > MAX_CHAT_MESSAGES_COUNT {
+                        chat_messages_widgets.remove(0);
+                    }
+                }
+
+                tokio::time::sleep(std::time::Duration::from_millis(params.room_sync_delay)).await;
+            }
+        }
+    });
+
+    // Main loop
+
     loop {
+        let chat_messages_widgets = chat_messages_widgets.lock().await.clone();
+        let messages_content_length = chat_messages_widgets.len();
+
         terminal.draw(|frame| {
             let layout = Layout::vertical([
                 Constraint::Fill(1),
@@ -64,13 +143,7 @@ pub async fn run() -> anyhow::Result<()> {
 
             frame.render_widget(message_widget.widget(), message_area);
 
-            let mut items = Vec::new();
-
-            for i in 1..101 {
-                items.push(Line::from(i.to_string()));
-            }
-
-            let paragraph = Paragraph::new(items.clone())
+            let paragraph = Paragraph::new(chat_messages_widgets)
                 .scroll((0, 0))
                 .block(Block::new().borders(Borders::RIGHT));
 
@@ -78,7 +151,7 @@ pub async fn run() -> anyhow::Result<()> {
                 .begin_symbol(Some("↑"))
                 .end_symbol(Some("↓"));
 
-            scrollbar_state = scrollbar_state.content_length(items.len());
+            scrollbar_state = scrollbar_state.content_length(messages_content_length);
 
             frame.render_widget(paragraph, messages_area);
 
@@ -109,8 +182,21 @@ pub async fn run() -> anyhow::Result<()> {
                         scrollbar_state.next();
                     }
 
+                    // Send chat message
                     else if key.code == KeyCode::Enter {
-                        // todo: send
+                        message_widget.select_all();
+                        message_widget.cut();
+
+                        let message = message_widget.yank_text()
+                            .trim()
+                            .to_string();
+
+                        if !message.is_empty() {
+                            // TODO: some fancy UI handling?
+                            let _ = client.send(endpoint.clone(), ChatMemberMessage::SendMessage {
+                                message: message_widget.yank_text()
+                            }).await;
+                        }
                     }
 
                     else {
