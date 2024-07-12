@@ -12,7 +12,7 @@ pub mod chat_ui;
 use client::*;
 use server::*;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 8)]
 async fn main() -> anyhow::Result<()> {
     let args = std::env::args()
         .collect::<Vec<_>>();
@@ -33,17 +33,19 @@ async fn main() -> anyhow::Result<()> {
             let member_app = ChatMemberApp::from_params(&params)?;
 
             // Run local server in background
-            println!("Starting local server...");
+            if params.client_start_local_server {
+                println!("Starting local server...");
 
-            let server = tokio::spawn(async move {
-                if let Err(err) = hyperelm::server::run(server_app).await {
-                    log::error!("Server closed: {err:?}");
-                };
-            });
+                tokio::spawn(async move {
+                    if let Err(err) = hyperelm::server::run(server_app).await {
+                        log::error!("Server closed: {err:?}");
+                    };
+                });
 
-            // Wait a little before connecting to the server
-            // so it's ready to handle incoming requests
-            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                // Wait a little before connecting to the server
+                // so it's ready to handle incoming requests
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            }
 
             // Run chat member client
             println!("Starting chat client app...");
@@ -79,9 +81,6 @@ async fn main() -> anyhow::Result<()> {
 
                 tokio::time::sleep(std::time::Duration::from_secs(params.room_lookup_delay)).await;
             }
-
-            // Stop the server
-            server.abort();
         }
 
         Some("server") => {

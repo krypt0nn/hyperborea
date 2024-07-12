@@ -12,6 +12,7 @@ pub struct Params {
     pub client_secret: String,
     pub client_server_public: String,
     pub client_server_address: String,
+    pub client_start_local_server: bool,
 
     pub server_secret: String,
     pub server_local_address: String,
@@ -34,6 +35,7 @@ impl Default for Params {
             client_secret: SecretKey::random().to_base64(),
             client_server_public: String::from("<globally available server's public key>"),
             client_server_address: String::from("<globally available address>"),
+            client_start_local_server: false,
 
             server_secret: SecretKey::random().to_base64(),
             server_local_address: String::from("127.0.0.1:51234"),
@@ -46,7 +48,7 @@ impl Default for Params {
             room_name: format!("Room #{}", safe_random_u64() % 9000 + 1000),
             room_username: format!("User #{}", safe_random_u64() % 9000 + 1000),
             room_lookup_delay: 15,
-            room_sync_delay: 1000,
+            room_sync_delay: 2500,
             room_encoding: String::from("base64/chacha20-poly1305")
         }
     }
@@ -64,6 +66,7 @@ pub async fn read() -> anyhow::Result<Params> {
         client_secret: params["client"]["secret_key"].as_str().unwrap().to_string(),
         client_server_public: params["client"]["server_public"].as_str().unwrap().to_string(),
         client_server_address: params["client"]["server_address"].as_str().unwrap().to_string(),
+        client_start_local_server: params["client"]["start_local_server"].as_bool().unwrap(),
 
         server_secret: params["server"]["secret_key"].as_str().unwrap().to_string(),
         server_local_address: params["server"]["local_address"].as_str().unwrap().to_string(),
@@ -91,7 +94,8 @@ pub async fn write(params: &Params) -> anyhow::Result<()> {
         "client": {
             "secret_key": params.client_secret,
             "server_public": params.client_server_public,
-            "server_address": params.client_server_address
+            "server_address": params.client_server_address,
+            "start_local_server": params.client_start_local_server
         },
         "server": {
             "secret_key": params.server_secret,

@@ -1,5 +1,6 @@
 const MAX_CHAT_MESSAGES_COUNT: usize = 128;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
@@ -33,27 +34,19 @@ use crate::params::Params;
 use crate::*;
 
 pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: Params) -> anyhow::Result<()> {
-    // TUI
-
-    enable_raw_mode()?;
-
-    std::io::stdout().execute(EnterAlternateScreen)?;
-
-    let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout()))?;
-
-    let mut scrollbar_state = ScrollbarState::new(0)
-        .position(0);
-
-    let mut message_widget = TextArea::new(vec![]);
-
-    message_widget.set_placeholder_text("Type a message...");
-
     // Logic
 
     let mut last_history_id = 0;
 
     let chat_messages_widgets = Arc::new(Mutex::new(Vec::new()));
-    let chat_members = ();
+    let chat_members_names = Arc::new(Mutex::new(HashMap::new()));
+
+    let response = client.request(endpoint.clone(), ChatMemberRequest::Join { username: params.room_username }).await
+        .map_err(|err| anyhow::anyhow!("Failed to join chat room: {err}"))?;
+
+    if let ChatHosterResponse::JoinResponse { members, history } = response {
+        // todo
+    }
 
     tokio::spawn({
         let client = client.clone();
@@ -65,7 +58,7 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
             loop {
                 // TODO: handle errors
                 let response = client.request(endpoint.clone(), ChatMemberRequest::GetHistory {
-                    since_id: last_history_id
+                    since_id: last_history_id + 1
                 }).await;
 
                 if let Ok(ChatHosterResponse::History { history }) = response {
@@ -78,11 +71,19 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
                                     .centered()
                                     .yellow();
 
+                                chat_members_names.lock().await
+                                    .insert(public_key.clone(), username.clone());
+
                                 chat_messages_widgets.push(widget);
                             }
 
                             ChatHistoryBlockBody::MemberLeave { public_key } => {
-                                let widget = Line::from(format!("[{}] left chat", public_key.to_base64()))
+                                let name = chat_members_names.lock().await
+                                    .get(&public_key)
+                                    .cloned()
+                                    .unwrap_or_else(move || public_key.to_base64());
+
+                                let widget = Line::from(format!("[{name}] left chat"))
                                     .centered()
                                     .yellow();
 
@@ -90,7 +91,12 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
                             }
 
                             ChatHistoryBlockBody::MemberSendMessage { public_key, message } => {
-                                let widget = Line::from(format!("[{}] : {message}", public_key.to_base64()));
+                                let name = chat_members_names.lock().await
+                                    .get(&public_key)
+                                    .cloned()
+                                    .unwrap_or_else(move || public_key.to_base64());
+
+                                let widget = Line::from(format!("[{name}] : {message}"));
 
                                 chat_messages_widgets.push(widget);
                             }
@@ -108,6 +114,21 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
             }
         }
     });
+
+    // TUI
+
+    enable_raw_mode()?;
+
+    std::io::stdout().execute(EnterAlternateScreen)?;
+
+    let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout()))?;
+
+    let mut scrollbar_state = ScrollbarState::new(0)
+        .position(0);
+
+    let mut message_widget = TextArea::new(vec![]);
+
+    message_widget.set_placeholder_text("Type a message...");
 
     // Main loop
 
@@ -210,6 +231,9 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
     disable_raw_mode()?;
 
     std::io::stdout().execute(LeaveAlternateScreen)?;
+
+    // Send leave message if possible
+    let _ = client.send(endpoint, ChatMemberMessage::Leave).await;
 
     Ok(())
 }

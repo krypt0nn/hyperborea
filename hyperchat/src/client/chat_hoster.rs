@@ -96,9 +96,7 @@ impl ClientApp for ChatHosterApp {
                         .expect("Failed to read application state (members list)")
                         .clone(),
 
-                    history: state.history.read()
-                        .expect("Failed to read application state (history)")
-                        .clone()
+                    history: history.clone()
                 })
             }
 
@@ -117,10 +115,17 @@ impl ClientApp for ChatHosterApp {
                 log::info!("[app][GetMembers] Get chat history");
                 log::info!("[app][GetMembers]   Public key : {}", info.sender.client.public_key.to_base64());
 
+                let mut history = state.history.read()
+                    .expect("Failed to read application state (history)")
+                    .iter()
+                    .filter(|record| record.id >= since_id)
+                    .cloned()
+                    .collect::<Vec<_>>();
+
+                history.sort_by(|a, b| a.id.cmp(&b.id));
+
                 Ok(ChatHosterResponse::History {
-                    history: state.history.read()
-                        .expect("Failed to read application state (history)")
-                        .clone()
+                    history: VecDeque::from(history)
                 })
             }
         };
