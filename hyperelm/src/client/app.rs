@@ -8,7 +8,7 @@ use hyperborealib::rest_api::prelude::*;
 use super::*;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ClientAppError<E> {
+pub enum ClientAppError<E: Send + Sync> {
     #[error(transparent)]
     SerdeJsonError(#[from] serde_json::Error),
 
@@ -47,7 +47,7 @@ pub trait ClientApp {
 
     type HttpClient: HttpClient;
     type State;
-    type Error;
+    type Error: Send + Sync;
 
     fn get_params(&self) -> &ClientAppParams;
     fn get_middlewire(&self) -> &ClientMiddleware<Self::HttpClient>;
@@ -131,7 +131,7 @@ pub trait ClientApp {
         loop {
             let (messages, _) = middlewire.poll(
                 &endpoint.server_address,
-                format!("{}#{request_id}", params.channel),
+                format!("{}@{request_id}", params.channel),
                 Some(1)
             ).await?;
 
@@ -204,7 +204,7 @@ pub trait ClientApp {
 
             // Handle request
             if let Some(request) = content.get("request") {
-                if let Some(request_id) = request.get("id").and_then(Json::as_u64) {
+                if let Some(request_id) = content.get("id").and_then(Json::as_u64) {
                     // Deserialize request
                     let request = Self::InputRequest::from_json(request)?;
 
@@ -223,7 +223,7 @@ pub trait ClientApp {
                         &message_info.sender.server.address,
                         message_info.sender.client.public_key,
                         self.get_sender(),
-                        format!("{}#{request_id}", params.channel),
+                        format!("{}@{request_id}", params.channel),
                         response
                     ).await?;
                 }
