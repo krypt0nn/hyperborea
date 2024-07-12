@@ -15,5 +15,7 @@ pub trait MessagesInbox {
     /// Read client's inbox, applying given filters.
     /// 
     /// Return list of read messages and number of remained.
+    /// 
+    /// This method will remove read messages from the inbox.
     async fn poll_messages(&self, receiver: PublicKey, channel: String, limit: Option<u64>) -> (Vec<MessageInfo>, u64);
 }
