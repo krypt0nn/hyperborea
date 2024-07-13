@@ -3,7 +3,6 @@ pub mod crypto;
 pub mod http;
 pub mod drivers;
 pub mod rest_api;
-pub mod bucket;
 
 pub mod exports {
     pub use k256;
