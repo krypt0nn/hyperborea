@@ -5,7 +5,7 @@ use rand_chacha::rand_core::{SeedableRng, RngCore};
 /// Generate random u64 number.
 /// 
 /// ```rust
-/// use hyperborealib::crypto::safe_random_u64;
+/// use hyperborealib::crypto::utils::safe_random_u64;
 /// 
 /// assert!(safe_random_u64() >= 0);
 /// assert!(safe_random_u64() <= u64::MAX);
@@ -22,7 +22,7 @@ pub fn safe_random_u64() -> u64 {
 /// start from `2^63`.
 /// 
 /// ```rust
-/// use hyperborealib::crypto::safe_random_u64_long;
+/// use hyperborealib::crypto::utils::safe_random_u64_long;
 /// 
 /// assert!(safe_random_u64_long() >= 1 << 63);
 /// assert!(safe_random_u64_long() <= u64::MAX);

@@ -15,6 +15,17 @@ impl From<CompressionLevel> for Compression {
     }
 }
 
+/// Compress given data using deflate compression algorithm.
+/// 
+/// ```rust
+/// use hyperborealib::crypto::compression::{CompressionLevel, deflate};
+/// 
+/// let original = b"Example string with maaaaaaaaaaaaaaany repetitions";
+/// 
+/// let compressed = deflate::compress(original, CompressionLevel::default()).unwrap();
+/// 
+/// assert!(original.len() > compressed.len());
+/// ```
 pub fn compress(data: impl AsRef<[u8]>, level: CompressionLevel) -> std::io::Result<Vec<u8>> {
     let data = data.as_ref();
 
@@ -28,6 +39,18 @@ pub fn compress(data: impl AsRef<[u8]>, level: CompressionLevel) -> std::io::Res
     encoder.finish()
 }
 
+/// Decompress given data using deflate compression algorithm.
+/// 
+/// ```rust
+/// use hyperborealib::crypto::compression::{CompressionLevel, deflate};
+/// 
+/// let original = b"Example string with maaaaaaaaaaaaaaany repetitions";
+/// 
+/// let compressed = deflate::compress(original, CompressionLevel::default()).unwrap();
+/// let decompressed = deflate::decompress(compressed).unwrap();
+/// 
+/// assert_eq!(decompressed, original);
+/// ```
 pub fn decompress(data: impl AsRef<[u8]>) -> std::io::Result<Vec<u8>> {
     let data = data.as_ref();
 

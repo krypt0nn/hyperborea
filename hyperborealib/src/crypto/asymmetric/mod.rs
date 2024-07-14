@@ -4,6 +4,9 @@ mod public_key;
 pub use secret_key::SecretKey;
 pub use public_key::PublicKey;
 
+/// Shared key generation seed.
+/// 
+/// Randomly generated using [random.org](https://www.random.org/sequences/?min=0&max=255&col=16&format=html&rnd=new) service.
 pub const HKDF_INFO: [u8; 64] = [
     162, 241, 203, 77,  49,  90,  31,  126, 67,  94,  191, 219, 56,  141, 46,  233,
     70,  18,  207, 194, 52,  154, 176, 139, 244, 222, 155, 110, 177, 91,  32,  218,

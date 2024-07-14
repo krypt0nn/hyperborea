@@ -22,6 +22,15 @@ pub enum Error {
     #[error(transparent)]
     Signature(#[from] k256::ecdsa::Error),
 
+    #[error("Unsupported encoding algorithm: {0}")]
+    UnknownEncoding(String),
+
+    #[error("Unsupported compression algorithm: {0}")]
+    UnknownCompression(String),
+
+    #[error("Unsupported encryption algorithm: {0}")]
+    UnknownEncryption(String),
+
     #[error("Failed to decode data: {0}")]
     Decoding(#[source] Box<dyn std::error::Error + Send + Sync>),
 

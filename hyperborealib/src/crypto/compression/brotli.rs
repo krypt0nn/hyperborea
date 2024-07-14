@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use brotli::{
     BrotliCompress,
     BrotliDecompress
@@ -35,6 +33,17 @@ impl From<CompressionLevel> for BrotliEncoderParams {
     }
 }
 
+/// Compress given data using brotli compression algorithm.
+/// 
+/// ```rust
+/// use hyperborealib::crypto::compression::{CompressionLevel, brotli};
+/// 
+/// let original = b"Example string with maaaaaaaaaaaaaaany repetitions";
+/// 
+/// let compressed = brotli::compress(original, CompressionLevel::default()).unwrap();
+/// 
+/// assert!(original.len() > compressed.len());
+/// ```
 pub fn compress(data: impl AsRef<[u8]>, level: CompressionLevel) -> std::io::Result<Vec<u8>> {
     let mut data = data.as_ref();
     let mut compressed = Vec::with_capacity(data.len());
@@ -48,6 +57,18 @@ pub fn compress(data: impl AsRef<[u8]>, level: CompressionLevel) -> std::io::Res
     Ok(compressed)
 }
 
+/// Decompress given data using brotli compression algorithm.
+/// 
+/// ```rust
+/// use hyperborealib::crypto::compression::{CompressionLevel, brotli};
+/// 
+/// let original = b"Example string with maaaaaaaaaaaaaaany repetitions";
+/// 
+/// let compressed = brotli::compress(original, CompressionLevel::default()).unwrap();
+/// let decompressed = brotli::decompress(compressed).unwrap();
+/// 
+/// assert_eq!(decompressed, original);
+/// ```
 pub fn decompress(data: impl AsRef<[u8]>) -> std::io::Result<Vec<u8>> {
     let mut data = data.as_ref();
     let mut decompressed = Vec::with_capacity(data.len());

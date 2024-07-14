@@ -3,12 +3,9 @@ use chacha20poly1305::aead::Aead;
 
 /// Standard nonce value used by the hyperborea protocol
 /// for ChaCha20-Poly1305 encryption algorithm.
-pub const NONCE: [u8; 32] = [
-    197, 93,  164, 33,  103, 79,  137, 143,
-    186, 253, 74,  220, 202, 54,  182, 47,
-    236, 124, 175, 177, 150, 127, 188, 104,
-    132, 227, 10,  55,  6,   15,  106, 194
-];
+/// 
+/// Randomly generated using [random.org](https://www.random.org/sequences/?min=0&max=255&col=12&format=html&rnd=new) service.
+pub const NONCE: [u8; 12] = [197, 93, 164, 33, 103, 79, 137, 143, 186, 253, 74, 220];
 
 /// Encrypt given value.
 /// 

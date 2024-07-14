@@ -67,8 +67,9 @@ impl AsJson for SendRequestBody {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::crypto::asymmetric::SecretKey;
-    use crate::rest_api::prelude::*;
 
     use super::*;
 
@@ -85,7 +86,7 @@ mod tests {
 
         let sender = Sender::new(client, server.clone());
 
-        let message_encoding = MessageEncoding::from_str("base64/plain").unwrap();
+        let message_encoding = MessageEncoding::from_str("base64").unwrap();
         let message = Message::new("content", "sign", message_encoding);
 
         let request = SendRequestBody::new(sender, server.public_key, "amogus", message);

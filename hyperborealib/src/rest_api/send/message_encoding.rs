@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::crypto::prelude::*;
 
 use super::Error;
@@ -22,8 +24,8 @@ impl MessageEncoding {
 
     /// Apply compression, encryption and encoding
     /// to the given data.
-    pub fn forward(&self, message: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<String, Error> {
-        let message = self.compression.compress(message)?;
+    pub fn forward(&self, message: impl AsRef<[u8]>, secret: &[u8; 32], level: CompressionLevel) -> Result<String, Error> {
+        let message = self.compression.compress(message, level)?;
         let message = self.encryption.encrypt(message, secret)?;
 
         Ok(self.encoding.encode(message))
@@ -37,93 +39,99 @@ impl MessageEncoding {
 
         Ok(self.compression.decompress(message)?)
     }
+}
 
-    #[allow(clippy::should_implement_trait)]
-    pub fn from_str(str: impl AsRef<str>) -> Result<Self, Error> {
-        match str.as_ref() {
-            "base64/plain" => Ok(Self {
-                encoding: Encoding::Base64,
-                encryption: Encryption::None,
-                compression: Compression::None
-            }),
+impl FromStr for MessageEncoding {
+    type Err = Error;
 
-            "base64/deflate" => Ok(Self {
-                encoding: Encoding::Base64,
-                encryption: Encryption::None,
-                compression: Compression::Deflate
-            }),
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let parts = str.split('/')
+            .collect::<Vec<_>>();
 
-            "base64/aes256-gcm" => Ok(Self {
-                encoding: Encoding::Base64,
-                encryption: Encryption::Aes256Gcm,
-                compression: Compression::None
-            }),
+        match parts.len() {
+            // <encoding>
+            1 => {
+                Ok(Self {
+                    encoding: Encoding::from_str(parts[0])?,
+                    encryption: Encryption::None,
+                    compression: Compression::None
+                })
+            }
 
-            "base64/chacha20-poly1305" => Ok(Self {
-                encoding: Encoding::Base64,
-                encryption: Encryption::ChaCha20Poly1305,
-                compression: Compression::None
-            }),
+            // <encoding>/<encryption>
+            // <encoding>/<compression>
+            2 => {
+                let encoding = Encoding::from_str(parts[0])?;
 
-            "base64/aes256-gcm/deflate" => Ok(Self {
-                encoding: Encoding::Base64,
-                encryption: Encryption::Aes256Gcm,
-                compression: Compression::Deflate
-            }),
+                if let Ok(encryption) = Encryption::from_str(parts[1]) {
+                    Ok(Self {
+                        encoding,
+                        encryption,
+                        compression: Compression::None
+                    })
+                }
 
-            "base64/chacha20-poly1305/deflate" => Ok(Self {
-                encoding: Encoding::Base64,
-                encryption: Encryption::ChaCha20Poly1305,
-                compression: Compression::Deflate
-            }),
+                else {
+                    Ok(Self {
+                        encoding,
+                        encryption: Encryption::None,
+                        compression: Compression::from_str(parts[1])?
+                    })
+                }
+            }
 
-            str => Err(Error::WrongMessageEncodingFormat(str.to_string()))
+            // <encoding>/<encryption>/<compression>
+            3 => {
+                Ok(Self {
+                    encoding: Encoding::from_str(parts[0])?,
+                    encryption: Encryption::from_str(parts[1])?,
+                    compression: Compression::from_str(parts[2])?
+                })
+            }
+
+            _ => Err(Error::WrongMessageEncodingFormat(str.to_string()))
         }
     }
+}
 
-    pub fn to_str(&self) -> &'static str {
-        match self.encryption {
-            Encryption::None => match self.compression {
-                Compression::None    => "base64/plain",
-                Compression::Deflate => "base64/deflate"
-            },
-
-            Encryption::Aes256Gcm => match self.compression {
-                Compression::None    => "base64/aes256-gcm",
-                Compression::Deflate => "base64/aes256-gcm/deflate"
-            },
-
-            Encryption::ChaCha20Poly1305 => match self.compression {
-                Compression::None    => "base64/chacha20-poly1305",
-                Compression::Deflate => "base64/chacha20-poly1305/deflate"
-            }
+impl std::fmt::Display for MessageEncoding {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match (self.encoding, self.encryption, self.compression) {
+            (encoding, Encryption::None, Compression::None) => write!(f, "{encoding}"),
+            (encoding, encryption, Compression::None) => write!(f, "{encoding}/{encryption}"),
+            (encoding, Encryption::None, compression) => write!(f, "{encoding}/{compression}"),
+            (encoding, encryption, compression) => write!(f, "{encoding}/{encryption}/{compression}")
         }
     }
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
-    #[test]
-    fn serialize() -> Result<(), Error> {
-        let encodings = [
-            MessageEncoding::from_str("base64/plain")?,
+    pub fn encodings() -> Result<Vec<MessageEncoding>, Error> {
+        Ok(vec![
+            MessageEncoding::from_str("base64")?,
+
             MessageEncoding::from_str("base64/deflate")?,
+            MessageEncoding::from_str("base64/brotli")?,
+
             MessageEncoding::from_str("base64/aes256-gcm")?,
             MessageEncoding::from_str("base64/chacha20-poly1305")?,
+
             MessageEncoding::from_str("base64/aes256-gcm/deflate")?,
-            MessageEncoding::from_str("base64/chacha20-poly1305/deflate")?
-        ];
+            MessageEncoding::from_str("base64/chacha20-poly1305/deflate")?,
+            MessageEncoding::from_str("base64/aes256-gcm/brotli")?,
+            MessageEncoding::from_str("base64/chacha20-poly1305/brotli")?
+        ])
+    }
 
-        match MessageEncoding::from_str("aboba") {
-            Err(Error::WrongMessageEncodingFormat(str)) if str == "aboba" => (),
+    #[test]
+    fn parse() -> Result<(), Error> {
+        assert!(MessageEncoding::from_str("aboba").is_err());
 
-            _ => panic!("Message encoding expected to fail at value 'aboba'")
-        }
-
-        for encoding in encodings {
-            assert_eq!(MessageEncoding::from_str(encoding.to_str())?, encoding);
+        for encoding in encodings()? {
+            assert_eq!(MessageEncoding::from_str(&encoding.to_string())?, encoding);
         }
 
         Ok(())

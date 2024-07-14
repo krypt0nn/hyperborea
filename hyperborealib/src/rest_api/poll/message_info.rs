@@ -65,6 +65,8 @@ impl AsJson for MessageInfo {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::crypto::asymmetric::SecretKey;
 
     use super::*;
@@ -82,7 +84,7 @@ mod tests {
 
         let sender = Sender::new(client, server.clone());
 
-        let encoding = MessageEncoding::from_str("base64/plain").unwrap();
+        let encoding = MessageEncoding::from_str("base64").unwrap();
         let message = Message::new("content", "sign", encoding);
 
         let info = MessageInfo::new_now(sender, "Hello, World!", message);

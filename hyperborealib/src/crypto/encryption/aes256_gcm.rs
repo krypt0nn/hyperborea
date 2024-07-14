@@ -3,12 +3,9 @@ use aes_gcm::aead::Aead;
 
 /// Standard nonce value used by the hyperborea protocol
 /// for AES256-GCM encryption algorithm.
-pub const NONCE: [u8; 32] = [
-    234, 90,  0,   39,  141, 73,  94,  100,
-    178, 97,  128, 118, 27,  225, 96,  83,
-    40,  169, 56,  155, 48,  4,   64,  78,
-    16,  136, 130, 66,  207, 129, 99,  61
-];
+/// 
+/// Randomly generated using [random.org](https://www.random.org/sequences/?min=0&max=255&col=12&format=html&rnd=new) service.
+pub const NONCE: [u8; 12] = [234, 90, 0, 39, 141, 73, 94, 100, 178, 97, 128, 118];
 
 /// Encrypt given value.
 /// 

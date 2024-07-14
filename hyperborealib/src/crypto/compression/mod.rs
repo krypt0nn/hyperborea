@@ -52,6 +52,18 @@ pub enum Compression {
 }
 
 impl Compression {
+    /// Compress given data with selected compression algorithm.
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::compression::{Compression, CompressionLevel};
+    /// 
+    /// let original = b"Example string with maaaaaaaaaaaaaaany repetitions";
+    /// 
+    /// let deflate = Compression::Deflate.compress(original, CompressionLevel::Quality).unwrap();
+    /// let brotli  = Compression::Brotli.compress(original, CompressionLevel::Quality).unwrap();
+    /// 
+    /// assert!(deflate.len() > brotli.len());
+    /// ```
     pub fn compress(&self, data: impl AsRef<[u8]>, level: CompressionLevel) -> Result<Vec<u8>, Error> {
         let data = data.as_ref();
 
@@ -66,6 +78,21 @@ impl Compression {
         }
     }
 
+    /// Decompress given data with selected compression algorithm.
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::compression::{Compression, CompressionLevel};
+    /// 
+    /// let original = b"Example string with maaaaaaaaaaaaaaany repetitions";
+    /// 
+    /// let compression = Compression::Deflate;
+    /// 
+    /// let compressed   = compression.compress(original, CompressionLevel::default()).unwrap();
+    /// let decompressed = compression.decompress(&compressed).unwrap();
+    /// 
+    /// assert!(original.len() > compressed.len());
+    /// assert_eq!(decompressed, original);
+    /// ```
     pub fn decompress(&self, data: impl AsRef<[u8]>) -> Result<Vec<u8>, Error> {
         let data = data.as_ref();
 
@@ -81,31 +108,76 @@ impl Compression {
     }
 }
 
+impl std::str::FromStr for Compression {
+    type Err = Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "none" | "plain" => Ok(Self::None),
+
+            "deflate" => Ok(Self::Deflate),
+            "brotli"  => Ok(Self::Brotli),
+
+            _ => Err(Error::UnknownCompression(value.to_string()))
+        }
+    }
+}
+
+impl std::fmt::Display for Compression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None    => write!(f, "plain"),
+            Self::Deflate => write!(f, "deflate"),
+            Self::Brotli  => write!(f, "brotli")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn compress_decompress() -> Result<(), Error> {
-        let compressions = [
-            Compression::None,
-            Compression::Deflate,
-            Compression::Brotli
-        ];
+    fn compressions() -> &'static [(Compression, &'static str)] {
+        &[
+            (Compression::None,    "plain"),
+            (Compression::Deflate, "deflate"),
+            (Compression::Brotli,  "brotli")
+        ]
+    }
 
-        let levels = [
+    fn levels() -> &'static [CompressionLevel] {
+        &[
             CompressionLevel::Fast,
             CompressionLevel::Balanced,
             CompressionLevel::Quality
-        ];
+        ]
+    }
 
-        for compression in compressions {
-            for level in levels {
-                let compressed = compression.compress(b"Hello, World!", level)?;
+    #[test]
+    fn compress_decompress() -> Result<(), Error> {
+        for (compression, _) in compressions() {
+            for level in levels() {
+                let compressed = compression.compress(b"Hello, World!", *level)?;
                 let decompressed = compression.decompress(compressed)?;
 
                 assert_eq!(decompressed, b"Hello, World!");
             }
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn display() {
+        for (compression, name) in compressions() {
+            assert_eq!(compression.to_string(), *name);
+        }
+    }
+
+    #[test]
+    fn parse() -> Result<(), Error> {
+        for (compression, name) in compressions() {
+            assert_eq!(name.parse::<Compression>()?, *compression);
         }
 
         Ok(())

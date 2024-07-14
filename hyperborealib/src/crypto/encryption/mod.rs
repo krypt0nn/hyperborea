@@ -28,6 +28,20 @@ pub enum Encryption {
 }
 
 impl Encryption {
+    /// Encrypt given data using selected encryption algorithm.
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::encryption::Encryption;
+    /// 
+    /// let original = b"Hello, World!";
+    /// let secret   = b"32 bytes long secret key .......";
+    /// 
+    /// let aes    = Encryption::Aes256Gcm.encrypt(original, &secret).unwrap();
+    /// let chacha = Encryption::ChaCha20Poly1305.encrypt(original, &secret).unwrap();
+    /// 
+    /// assert_ne!(aes, original);
+    /// assert_ne!(chacha, original);
+    /// ```
     pub fn encrypt(&self, data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
         match self {
             Self::None => Ok(data.as_ref().to_vec()),
@@ -40,6 +54,23 @@ impl Encryption {
         }
     }
 
+    /// Encrypt given data using selected encryption algorithm.
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::encryption::Encryption;
+    /// 
+    /// let original = b"Hello, World!";
+    /// let secret   = b"32 bytes long secret key .......";
+    /// 
+    /// let aes    = Encryption::Aes256Gcm.encrypt(original, &secret).unwrap();
+    /// let chacha = Encryption::ChaCha20Poly1305.encrypt(original, &secret).unwrap();
+    /// 
+    /// let aes    = Encryption::Aes256Gcm.decrypt(aes, &secret).unwrap();
+    /// let chacha = Encryption::ChaCha20Poly1305.decrypt(chacha, &secret).unwrap();
+    /// 
+    /// assert_eq!(aes, original);
+    /// assert_eq!(chacha, original);
+    /// ```
     pub fn decrypt(&self, data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
         match self {
             Self::None => Ok(data.as_ref().to_vec()),
@@ -53,25 +84,68 @@ impl Encryption {
     }
 }
 
+impl std::str::FromStr for Encryption {
+    type Err = Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "none" | "plain" => Ok(Self::None),
+
+            "aes256-gcm" => Ok(Self::Aes256Gcm),
+            "chacha20-poly1305"  => Ok(Self::ChaCha20Poly1305),
+
+            _ => Err(Error::UnknownEncryption(value.to_string()))
+        }
+    }
+}
+
+impl std::fmt::Display for Encryption {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None             => write!(f, "plain"),
+            Self::Aes256Gcm        => write!(f, "aes256-gcm"),
+            Self::ChaCha20Poly1305 => write!(f, "chacha20-poly1305")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    fn encryptions() -> &'static [(Encryption, &'static str)] {
+        &[
+            (Encryption::None,             "plain"),
+            (Encryption::Aes256Gcm,        "aes256-gcm"),
+            (Encryption::ChaCha20Poly1305, "chacha20-poly1305")
+        ]
+    }
+
     #[test]
     fn encryption_decryption() -> Result<(), Error> {
-        let encryptions = [
-            Encryption::None,
-            Encryption::Aes256Gcm,
-            Encryption::ChaCha20Poly1305
-        ];
-
         let key = b"amogus aboba banana aboba amogus";
 
-        for encryption in encryptions {
+        for (encryption, _) in encryptions() {
             let encrypted = encryption.encrypt(b"Hello, World!", key)?;
             let decrypted = encryption.decrypt(encrypted, key)?;
 
             assert_eq!(decrypted, b"Hello, World!");
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn display() {
+        for (encryption, name) in encryptions() {
+            assert_eq!(encryption.to_string(), *name);
+        }
+    }
+
+    #[test]
+    fn parse() -> Result<(), Error> {
+        for (encryption, name) in encryptions() {
+            assert_eq!(name.parse::<Encryption>()?, *encryption);
         }
 
         Ok(())

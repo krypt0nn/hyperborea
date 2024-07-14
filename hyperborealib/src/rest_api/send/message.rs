@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde_json::{json, Value as Json};
 
 use crate::crypto::prelude::*;
@@ -30,14 +32,14 @@ impl Message {
     /// 
     /// Signature and shared secret key is calculated using `sender`
     /// and `receiver` keys.
-    pub fn create(sender: &SecretKey, receiver: &PublicKey, data: impl AsRef<[u8]>, encoding: MessageEncoding) -> Result<Self, Error> {
+    pub fn create(sender: &SecretKey, receiver: &PublicKey, data: impl AsRef<[u8]>, encoding: MessageEncoding, level: CompressionLevel) -> Result<Self, Error> {
         let secret = sender.create_shared_secret(receiver, None);
 
         let sign = sender.create_signature(data.as_ref());
 
         Ok(Self {
-            content: encoding.forward(data, &secret)?,
-            sign: encoding.forward(sign, &secret)?,
+            content: encoding.forward(data, &secret, level)?,
+            sign: encoding.forward(sign, &secret, level)?,
             encoding
         })
     }
@@ -65,7 +67,7 @@ impl AsJson for Message {
         Ok(json!({
             "content": self.content,
             "sign": self.sign,
-            "encoding": self.encoding.to_str()
+            "encoding": self.encoding.to_string()
         }))
     }
 
@@ -92,18 +94,9 @@ impl AsJson for Message {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::rest_api::send::message_encoding::tests::encodings;
 
-    fn encodings() -> Result<[MessageEncoding; 6], Error> {
-        Ok([
-            MessageEncoding::from_str("base64/plain")?,
-            MessageEncoding::from_str("base64/deflate")?,
-            MessageEncoding::from_str("base64/aes256-gcm")?,
-            MessageEncoding::from_str("base64/chacha20-poly1305")?,
-            MessageEncoding::from_str("base64/aes256-gcm/deflate")?,
-            MessageEncoding::from_str("base64/chacha20-poly1305/deflate")?
-        ])
-    }
+    use super::*;
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
@@ -115,7 +108,8 @@ mod tests {
                 &sender,
                 &receiver.public_key(),
                 b"Hello, World!",
-                encoding
+                encoding,
+                CompressionLevel::default()
             ).unwrap();
 
             assert_eq!(Message::from_json(&message.to_json()?)?, message);
@@ -134,7 +128,8 @@ mod tests {
                 &sender,
                 &receiver.public_key(),
                 b"Hello, World!",
-                encoding
+                encoding,
+                CompressionLevel::default()
             ).unwrap();
 
             assert_eq!(message.read(&receiver, &sender.public_key())?, b"Hello, World!");
