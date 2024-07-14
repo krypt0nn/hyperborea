@@ -19,6 +19,27 @@ pub mod prelude {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// General data encryption implementation.
+/// 
+/// ```rust
+/// use std::str::FromStr;
+/// 
+/// use hyperborealib::crypto::encryption::Encryption;
+/// 
+/// assert_eq!(Encryption::None.to_string(),             "plain");
+/// assert_eq!(Encryption::Aes256Gcm.to_string(),        "aes256-gcm");
+/// assert_eq!(Encryption::ChaCha20Poly1305.to_string(), "chacha20-poly1305");
+/// 
+/// assert_eq!(Encryption::from_str("none").unwrap(),              Encryption::None);
+/// assert_eq!(Encryption::from_str("plain").unwrap(),             Encryption::None);
+/// assert_eq!(Encryption::from_str("aes256-gcm").unwrap(),        Encryption::Aes256Gcm);
+/// assert_eq!(Encryption::from_str("chacha20-poly1305").unwrap(), Encryption::ChaCha20Poly1305);
+/// 
+/// assert_eq!("none".parse::<Encryption>().unwrap(),              Encryption::None);
+/// assert_eq!("plain".parse::<Encryption>().unwrap(),             Encryption::None);
+/// assert_eq!("aes256-gcm".parse::<Encryption>().unwrap(),        Encryption::Aes256Gcm);
+/// assert_eq!("chacha20-poly1305".parse::<Encryption>().unwrap(), Encryption::ChaCha20Poly1305);
+/// ```
 pub enum Encryption {
     #[default]
     None,

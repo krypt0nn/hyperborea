@@ -43,6 +43,27 @@ pub enum CompressionLevel {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// General data compression implementation.
+/// 
+/// ```rust
+/// use std::str::FromStr;
+/// 
+/// use hyperborealib::crypto::compression::Compression;
+/// 
+/// assert_eq!(Compression::None.to_string(),    "plain");
+/// assert_eq!(Compression::Deflate.to_string(), "deflate");
+/// assert_eq!(Compression::Brotli.to_string(),  "brotli");
+/// 
+/// assert_eq!(Compression::from_str("none").unwrap(),    Compression::None);
+/// assert_eq!(Compression::from_str("plain").unwrap(),   Compression::None);
+/// assert_eq!(Compression::from_str("deflate").unwrap(), Compression::Deflate);
+/// assert_eq!(Compression::from_str("brotli").unwrap(),  Compression::Brotli);
+/// 
+/// assert_eq!("none".parse::<Compression>().unwrap(),    Compression::None);
+/// assert_eq!("plain".parse::<Compression>().unwrap(),   Compression::None);
+/// assert_eq!("deflate".parse::<Compression>().unwrap(), Compression::Deflate);
+/// assert_eq!("brotli".parse::<Compression>().unwrap(),  Compression::Brotli);
+/// ```
 pub enum Compression {
     #[default]
     None,

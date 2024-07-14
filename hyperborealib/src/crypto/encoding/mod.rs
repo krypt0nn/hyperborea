@@ -13,6 +13,19 @@ pub mod prelude {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// General binary data encodings implementation.
+/// 
+/// ```rust
+/// use std::str::FromStr;
+/// 
+/// use hyperborealib::crypto::encoding::Encoding;
+/// 
+/// assert_eq!(Encoding::Base64.to_string(), "base64");
+/// 
+/// assert_eq!(Encoding::from_str("base64").unwrap(), Encoding::Base64);
+/// 
+/// assert_eq!("base64".parse::<Encoding>().unwrap(), Encoding::Base64);
+/// ```
 pub enum Encoding {
     #[default]
     Base64
