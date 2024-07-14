@@ -377,31 +377,49 @@ Send message to the connected client through its server.
 
 ### Encodings
 
+List of messages encoding formats that must be supported by all the protocols implementers.
+
 #### Plain text
+
+Format: `<encoding>`.
 
 | Encoding | Description |
 | - | - |
-| `base64/plain` | Base64-encoded plain text value |
+| `base64` | Base64-encoded plain text value |
 
 #### With compression
+
+Format: `<encoding>/<compression>`.
 
 | Encoding | Description |
 | - | - |
 | `base64/deflate` | Base64-encoded value with [deflate](https://en.wikipedia.org/wiki/Deflate) compression |
+| `base64/brotli` | Base64-encoded value with [brotli](https://en.wikipedia.org/wiki/Brotli) compression |
+
+> Note: according to [this paper](https://cran.r-project.org/web//packages/brotli/vignettes/brotli-2015-09-22.pdf) brotli compression has
+> really good results in comaprison with other popular compression methods, including deflate, when used on small files.
 
 #### With encryption
+
+Format: `<encoding>/<encryption>`.
 
 | Encoding | Description |
 | - | - |
 | `base64/aes256-gcm` | Base64-encoded value encrypted with [AES-256-GCM](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) |
 | `base64/chacha20-poly1305` | Base64-encoded value encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
 
+> Note: ChaCha20-Poly1305 is a modern algorithm originated from the stream encryption algorithm ChaCha20. This makes it much faster than AES-256, even with hardware acceleration modules.
+
 #### With compression and encryption
+
+Format: `<encoding>/<encryption>/<compression>`.
 
 | Encoding | Description |
 | - | - |
 | `base64/aes256-gcm/deflate` | Base64-encoded value compressed with [deflate](https://en.wikipedia.org/wiki/Deflate) and encrypted with [AES-256-GCM](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) |
 | `base64/chacha20-poly1305/deflate` | Base64-encoded value compressed with [deflate](https://en.wikipedia.org/wiki/Deflate) and encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
+| `base64/aes256-gcm/brotli` | Base64-encoded value compressed with [brotli](https://en.wikipedia.org/wiki/Brotli) and encrypted with [AES-256-GCM](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) |
+| `base64/chacha20-poly1305/brotli` | Base64-encoded value compressed with [brotli](https://en.wikipedia.org/wiki/Brotli) and encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) |
 
 Operations order:
 
