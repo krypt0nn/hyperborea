@@ -409,6 +409,8 @@ Operations order:
 2. Encryption (if presented)
 3. Encoding
 
+> Encryption and digital signatures generators must use pre-defined nonces. Refer to the standard implementation for details.
+
 ### Types
 
 ```ts

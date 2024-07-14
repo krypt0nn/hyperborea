@@ -1,16 +1,8 @@
 use serde_json::Value as Json;
 
+use crate::crypto::prelude::*;
 use crate::rest_api::prelude::*;
 
-use crate::crypto::{
-    PublicKey,
-    SecretKey,
-    Error as CryptographyError
-};
-
-mod text_encoding;
-mod text_encryption;
-mod text_compression;
 mod message_encoding;
 mod message;
 mod sender;
@@ -18,9 +10,6 @@ mod sender;
 mod request;
 mod response;
 
-pub use text_encoding::*;
-pub use text_encryption::*;
-pub use text_compression::*;
 pub use message_encoding::*;
 pub use message::*;
 pub use sender::*;
@@ -35,21 +24,6 @@ pub enum Error {
 
     #[error("Message's signature is invalid")]
     InvalidMessageSignature,
-
-    #[error("Failed to decode text: {0}")]
-    TextDecodingError(#[source] Box<dyn std::error::Error + Send + Sync>),
-
-    #[error("Failed to encrypt text: {0}")]
-    TextEncryptionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
-
-    #[error("Failed to decrypt text: {0}")]
-    TextDecryptionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
-
-    #[error("Failed to compress text: {0}")]
-    TextCompressionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
-
-    #[error("Failed to decompress text: {0}")]
-    TextDecompressionFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error(transparent)]
     CryptographyError(#[from] CryptographyError)

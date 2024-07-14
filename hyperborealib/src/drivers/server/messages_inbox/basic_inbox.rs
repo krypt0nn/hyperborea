@@ -4,7 +4,7 @@ use moka::future::Cache;
 
 use crate::time::timestamp;
 
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 use crate::rest_api::prelude::*;
 
 use super::MessagesInbox;

@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use moka::future::Cache;
 
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 
 use crate::rest_api::clients::Client;
 use crate::rest_api::servers::Server;

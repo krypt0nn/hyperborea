@@ -1,4 +1,4 @@
-use crate::crypto::SecretKey;
+use crate::crypto::asymmetric::SecretKey;
 use crate::rest_api::connect::ClientInfo;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

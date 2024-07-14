@@ -1,6 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::{PublicKey, SecretKey};
+use crate::crypto::prelude::*;
 use crate::rest_api::{AsJson, AsJsonError};
 
 use super::{MessageEncoding, Error};
@@ -36,8 +36,8 @@ impl Message {
         let sign = sender.create_signature(data.as_ref());
 
         Ok(Self {
-            content: encoding.forward(data, secret)?,
-            sign: encoding.forward(sign, secret)?,
+            content: encoding.forward(data, &secret)?,
+            sign: encoding.forward(sign, &secret)?,
             encoding
         })
     }
@@ -49,8 +49,8 @@ impl Message {
     pub fn read(&self, receiver: &SecretKey, sender: &PublicKey) -> Result<Vec<u8>, Error> {
         let secret = receiver.create_shared_secret(sender, None);
 
-        let content = self.encoding.backward(&self.content, secret)?;
-        let sign = self.encoding.backward(&self.sign, secret)?;
+        let content = self.encoding.backward(&self.content, &secret)?;
+        let sign = self.encoding.backward(&self.sign, &secret)?;
 
         if !sender.verify_signature(&content, sign)? {
             return Err(Error::InvalidMessageSignature);

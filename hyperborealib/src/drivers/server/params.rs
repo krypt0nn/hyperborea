@@ -1,4 +1,4 @@
-use crate::crypto::SecretKey;
+use crate::crypto::asymmetric::SecretKey;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ServerParams {

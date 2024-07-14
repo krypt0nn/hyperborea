@@ -1,6 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 
 use crate::rest_api::prelude::*;
 
@@ -67,13 +67,13 @@ impl AsJson for SendRequestBody {
 
 #[cfg(test)]
 mod tests {
+    use crate::crypto::asymmetric::SecretKey;
+    use crate::rest_api::prelude::*;
+
     use super::*;
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-        use crate::rest_api::prelude::*;
-
         let client = SecretKey::random();
         let server = SecretKey::random();
 

@@ -1,6 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 use crate::http::client::HttpClient;
 use crate::drivers::ClientDriver;
 

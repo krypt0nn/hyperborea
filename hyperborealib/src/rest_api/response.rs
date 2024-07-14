@@ -1,10 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::{
-    PublicKey,
-    base64_encode,
-    base64_decode
-};
+use crate::crypto::prelude::*;
 
 use crate::STANDARD_VERSION;
 
@@ -181,13 +177,13 @@ impl<T: AsJson> AsJson for Response<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::crypto::asymmetric::SecretKey;
+    use crate::rest_api::connect::ConnectResponse;
+
     use super::*;
 
     #[test]
     fn serialize_success() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-        use crate::rest_api::connect::ConnectResponse;
-
         let secret = SecretKey::random();
         let public = SecretKey::random().public_key();
 
@@ -204,8 +200,6 @@ mod tests {
 
     #[test]
     fn serialize_error() -> Result<(), AsJsonError> {
-        use crate::rest_api::connect::ConnectResponse;
-
         let response = Response::<ConnectResponse>::error(ResponseStatus::MessageTooLarge, "Hello, World!");
 
         assert_eq!(Response::from_json(&response.to_json()?)?, response);

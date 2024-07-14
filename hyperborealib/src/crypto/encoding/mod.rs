@@ -1,25 +1,34 @@
-use crate::crypto::{base64_encode, base64_decode};
-
 use super::Error;
+
+pub mod base64;
+
+pub mod prelude {
+    pub use super::Encoding;
+
+    pub use super::base64::{
+        encode as base64_encode,
+        decode as base64_decode
+    };
+}
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TextEncoding {
+pub enum Encoding {
     #[default]
     Base64
 }
 
-impl TextEncoding {
+impl Encoding {
     pub fn encode(&self, data: impl AsRef<[u8]>) -> String {
         match self {
-            Self::Base64 => base64_encode(data)
+            Self::Base64 => base64::encode(data)
         }
     }
 
     pub fn decode(&self, text: impl AsRef<str>) -> Result<Vec<u8>, Error> {
         match self {
-            Self::Base64 => base64_decode(text)
-                .map_err(|err| Error::TextDecodingError(err.into()))
+            Self::Base64 => base64::decode(text)
+                .map_err(|err| Error::Decoding(err.into()))
         }
     }
 }
@@ -31,7 +40,7 @@ mod tests {
     #[test]
     fn encode_decode() -> Result<(), Error> {
         let encodings = [
-            TextEncoding::Base64
+            Encoding::Base64
         ];
 
         for encoding in encodings {

@@ -1,12 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::{
-    PublicKey,
-    SecretKey,
-    base64_decode,
-    base64_encode,
-    safe_random_u64
-};
+use crate::crypto::prelude::*;
 
 use crate::STANDARD_VERSION;
 
@@ -28,8 +22,7 @@ pub struct Request<T> {
 
 impl<T> Request<T> {
     pub fn new(client_secret: &SecretKey, request: T) -> Self {
-        // Generate 64 bits long number
-        let proof_seed = (1 << 63) + (safe_random_u64() >> 1);
+        let proof_seed = safe_random_u64_long();
 
         let proof_sign = client_secret.create_signature(proof_seed.to_be_bytes());
 
@@ -116,13 +109,13 @@ impl<T: AsJson> AsJson for Request<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::crypto::asymmetric::SecretKey;
+    use crate::rest_api::connect::{ConnectRequest, ClientInfo};
+
     use super::*;
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-        use crate::rest_api::connect::{ConnectRequest, ClientInfo};
-
         let secret = SecretKey::random();
         let public = SecretKey::random().public_key();
 

@@ -63,9 +63,6 @@ pub mod prelude {
     };
 
     pub use super::send::{
-        TextEncoding,
-        TextEncryption,
-        TextCompression,
         MessageEncoding,
         Message,
         Sender,

@@ -148,18 +148,17 @@ impl AsJson for LookupResponseBody {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::crypto::asymmetric::SecretKey;
 
-    #[cfg(test)]
     use crate::rest_api::connect::{
         ConnectionCertificate,
         ClientInfo
     };
 
+    use super::*;
+
     #[test]
     fn serialize_local() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let secret = SecretKey::random();
         let public = SecretKey::random().public_key();
 
@@ -180,8 +179,6 @@ mod tests {
 
     #[test]
     fn serialize_remote() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let secret = SecretKey::random();
         let public = SecretKey::random().public_key();
 
@@ -204,8 +201,6 @@ mod tests {
 
     #[test]
     fn serialize_hint() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let public = SecretKey::random().public_key();
 
         let response = LookupResponseBody::hint(vec![

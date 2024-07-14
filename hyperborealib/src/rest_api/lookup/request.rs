@@ -1,6 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::PublicKey;
+use crate::crypto::prelude::*;
 use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -50,8 +50,6 @@ mod tests {
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let public = SecretKey::random().public_key();
 
         let request = LookupRequestBody::new(public.clone(), Some(ClientType::Thin));

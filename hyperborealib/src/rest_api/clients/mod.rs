@@ -1,6 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 
 use crate::rest_api::prelude::*;
 
@@ -110,13 +110,13 @@ impl AsJson for ClientsResponse {
 
 #[cfg(test)]
 mod tests {
+    use crate::crypto::asymmetric::SecretKey;
+    use crate::rest_api::connect::ConnectionCertificate;
+
     use super::*;
 
     #[test]
     fn serialize_client() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-        use crate::rest_api::connect::ConnectionCertificate;
-
         let secret = SecretKey::random();
         let public = SecretKey::random().public_key();
 
@@ -138,9 +138,6 @@ mod tests {
 
     #[test]
     fn serialize_response() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-        use crate::rest_api::connect::ConnectionCertificate;
-
         let secret = SecretKey::random();
         let public = SecretKey::random().public_key();
 

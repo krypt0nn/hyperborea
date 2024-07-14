@@ -50,12 +50,12 @@ impl AsJson for PollResponseBody {
 
 #[cfg(test)]
 mod tests {
+    use crate::crypto::asymmetric::SecretKey;
+
     use super::*;
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let client = SecretKey::random();
         let server = SecretKey::random();
 

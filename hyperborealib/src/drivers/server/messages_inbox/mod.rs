@@ -1,4 +1,4 @@
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 
 use crate::rest_api::prelude::*;
 

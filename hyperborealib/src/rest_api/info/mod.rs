@@ -1,14 +1,7 @@
 use serde_json::{json, Value as Json};
 
+use crate::crypto::prelude::*;
 use crate::rest_api::{AsJson, AsJsonError};
-
-use crate::crypto::{
-    PublicKey,
-    SecretKey,
-    base64_encode,
-    base64_decode,
-    safe_random_u64
-};
 
 use crate::STANDARD_VERSION;
 
@@ -25,8 +18,7 @@ pub struct InfoResponse {
 
 impl InfoResponse {
     pub fn new(server_secret: &SecretKey) -> Self {
-        // Generate 64 bits long number
-        let proof_seed = (1 << 63) + (safe_random_u64() >> 1);
+        let proof_seed = safe_random_u64_long();
 
         let proof_sign = server_secret.create_signature(proof_seed.to_be_bytes());
 

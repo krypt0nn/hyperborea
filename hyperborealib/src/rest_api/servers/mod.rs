@@ -1,6 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::PublicKey;
+use crate::crypto::asymmetric::PublicKey;
 
 use crate::rest_api::{AsJson, AsJsonError};
 
@@ -103,12 +103,12 @@ impl AsJson for ServersResponse {
 
 #[cfg(test)]
 mod tests {
+    use crate::crypto::asymmetric::SecretKey;
+
     use super::*;
 
     #[test]
     fn serialize_server() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let server = Server {
             public_key: SecretKey::random().public_key(),
             address: String::from("Hello, World!")
@@ -121,8 +121,6 @@ mod tests {
 
     #[test]
     fn serialize_response() -> Result<(), AsJsonError> {
-        use crate::crypto::SecretKey;
-
         let response = ServersResponse::new(vec![
             Server {
                 public_key: SecretKey::random().public_key(),
