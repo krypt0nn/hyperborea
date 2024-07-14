@@ -27,17 +27,27 @@ pub enum CompressionLevel {
     /// 
     /// Generally provides bad results, but helpful
     /// when you send many messages.
+    /// 
+    /// Resolves into the lowest possible compression level
+    /// of the used algorithm.
     Fast,
 
     #[default]
     /// Balanced compression speed.
     /// 
     /// Provides good results for affordable time and resources.
+    /// 
+    /// Resolves into the default compression level
+    /// of the used algorithm, or to manually selected one
+    /// according to tests results.
     Balanced,
 
     /// Best possible compression.
     /// 
     /// Will require many time and computation resources.
+    /// 
+    /// Resolves into the highest possible compression level
+    /// of the used algorithm.
     Quality
 }
 
