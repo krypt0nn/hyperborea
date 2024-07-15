@@ -32,7 +32,7 @@ impl ClientsResponse {
     /// let server_public = SecretKey::random().public_key();
     /// 
     /// // Connection certificate of this client to the random server
-    /// let certificate = ConnectionCertificate::new(secret_key, server_public);
+    /// let certificate = ConnectionCertificate::new(&secret_key, server_public);
     /// 
     /// // Information about the client
     /// let info = ClientInfo::thin();

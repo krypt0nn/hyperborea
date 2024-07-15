@@ -19,7 +19,7 @@ pub const NONCE: [u8; 12] = [234, 90, 0, 39, 141, 73, 94, 100, 178, 97, 128, 118
 /// let original = b"Hello, World!";
 /// let secret   = b"32 bytes long secret key .......";
 /// 
-/// let encrypted = aes256_gcm::encrypt(original, &secret);
+/// let encrypted = aes256_gcm::encrypt(original, &secret).unwrap();
 /// 
 /// assert_ne!(encrypted, original);
 /// ```
@@ -42,8 +42,8 @@ pub fn encrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Err
 /// let original = b"Hello, World!";
 /// let secret   = b"32 bytes long secret key .......";
 /// 
-/// let encrypted = aes256_gcm::encrypt(original, &secret);
-/// let decrypted = aes256_gcm::decrypt(&encrypted, &secret);
+/// let encrypted = aes256_gcm::encrypt(original, &secret).unwrap();
+/// let decrypted = aes256_gcm::decrypt(&encrypted, &secret).unwrap();
 /// 
 /// assert_ne!(encrypted, original);
 /// assert_eq!(decrypted, original);

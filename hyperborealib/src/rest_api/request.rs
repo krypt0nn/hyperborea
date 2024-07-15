@@ -81,7 +81,7 @@ impl<T> Request<T> {
     /// // Create empty request
     /// let request = Request::new(&secret_key, ());
     /// 
-    /// assert_eq!(request.validate(), Ok(true));
+    /// assert!(request.validate().unwrap());
     /// ```
     pub fn validate(&self) -> Result<bool, ValidationError> {
         if self.proof_seed < 1 << 63 {
@@ -212,7 +212,7 @@ mod tests {
 
         request.proof_sign = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
-        assert!(!request.validate()?);
+        assert!(request.validate().is_err());
 
         Ok(())
     }

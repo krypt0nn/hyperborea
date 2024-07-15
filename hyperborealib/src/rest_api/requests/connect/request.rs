@@ -75,7 +75,7 @@ impl ConnectRequestBody {
     /// 
     /// // Prepare information about the client
     /// let client = ClientInfo::thin();
-    /// let certificate = ConnectionCertificate::new();
+    /// let certificate = ConnectionCertificate::new(&client_secret, server_public);
     /// 
     /// // Craft the request body
     /// let request_body = ConnectRequestBody::from_certificate(client, certificate);

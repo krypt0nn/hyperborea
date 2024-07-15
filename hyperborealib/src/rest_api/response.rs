@@ -92,7 +92,7 @@ impl<T> Response<T> {
     /// ```rust
     /// use hyperborealib::rest_api::prelude::*;
     /// 
-    /// let response = Response::error(
+    /// let response = Response::<()>::error(
     ///     ResponseStatus::ServerError,
     ///     "Example error"
     /// );
@@ -154,7 +154,7 @@ impl<T> Response<T> {
     ///     ()
     /// );
     /// 
-    /// assert!(response.validate(proof_seed).unwrap(), true);
+    /// assert!(response.validate(proof_seed).unwrap());
     /// ```
     /// 
     /// ## Error response
@@ -162,12 +162,12 @@ impl<T> Response<T> {
     /// ```rust
     /// use hyperborealib::rest_api::prelude::*;
     /// 
-    /// let response = Response::error(
+    /// let response = Response::<()>::error(
     ///     ResponseStatus::ServerError,
     ///     "Example error"
     /// );
     /// 
-    /// assert!(response.validate(0).unwrap(), true);
+    /// assert!(response.validate(0).unwrap());
     /// ```
     pub fn validate(&self, proof_seed: u64) -> Result<bool, ValidationError> {
         match self {

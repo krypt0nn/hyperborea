@@ -19,7 +19,7 @@ pub const NONCE: [u8; 12] = [197, 93, 164, 33, 103, 79, 137, 143, 186, 253, 74, 
 /// let original = b"Hello, World!";
 /// let secret   = b"32 bytes long secret key .......";
 /// 
-/// let encrypted = chacha20_poly1305::encrypt(original, &secret);
+/// let encrypted = chacha20_poly1305::encrypt(original, &secret).unwrap();
 /// 
 /// assert_ne!(encrypted, original);
 /// ```
@@ -42,8 +42,8 @@ pub fn encrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Err
 /// let original = b"Hello, World!";
 /// let secret   = b"32 bytes long secret key .......";
 /// 
-/// let encrypted = chacha20_poly1305::encrypt(original, &secret);
-/// let decrypted = chacha20_poly1305::decrypt(&encrypted, &secret);
+/// let encrypted = chacha20_poly1305::encrypt(original, &secret).unwrap();
+/// let decrypted = chacha20_poly1305::decrypt(&encrypted, &secret).unwrap();
 /// 
 /// assert_ne!(encrypted, original);
 /// assert_eq!(decrypted, original);
