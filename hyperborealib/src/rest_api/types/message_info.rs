@@ -67,33 +67,22 @@ impl AsJson for MessageInfo {
 pub(crate) mod tests {
     use std::str::FromStr;
 
-    use crate::crypto::asymmetric::SecretKey;
+    use crate::rest_api::types::sender::tests::get_sender;
 
     use super::*;
 
     pub fn get_message_info() -> MessageInfo {
-        todo!()
+        let encoding = MessageEncoding::from_str("base64").unwrap();
+        let message = Message::new("content", "sign", encoding);
+
+        MessageInfo::new_now(get_sender(), "Hello, World!", message)
     }
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        let client = SecretKey::random();
-        let server = SecretKey::random();
+        let message_info = get_message_info();
 
-        let info = ClientInfo::thin();
-        let cert = ConnectionCertificate::new(&client, server.public_key());
-
-        let client = Client::new(client.public_key(), cert, info);
-        let server = Server::new(server.public_key(), "amogus");
-
-        let sender = Sender::new(client, server.clone());
-
-        let encoding = MessageEncoding::from_str("base64").unwrap();
-        let message = Message::new("content", "sign", encoding);
-
-        let info = MessageInfo::new_now(sender, "Hello, World!", message);
-
-        assert_eq!(MessageInfo::from_json(&info.to_json()?)?, info);
+        assert_eq!(MessageInfo::from_json(&message_info.to_json()?)?, message_info);
 
         Ok(())
     }

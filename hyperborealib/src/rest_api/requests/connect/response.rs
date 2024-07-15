@@ -5,6 +5,8 @@ use crate::rest_api::{AsJson, AsJsonError};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// `POST /api/v1/connect` response body.
+/// 
+/// Refer to `ConnectResponse` for details.
 pub struct ConnectResponseBody;
 
 impl ConnectResponseBody {

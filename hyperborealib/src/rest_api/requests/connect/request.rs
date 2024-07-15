@@ -7,13 +7,7 @@ use crate::rest_api::prelude::*;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// `POST /api/v1/connect` request body.
 /// 
-/// This request is sent to the `POST /api/v1/connect` to
-/// perform client connection to the chosen server. Connected
-/// clients are linked to their servers by the connection
-/// certificates. They should be used to identify to which
-/// server a client is connected if there's two or more records
-/// of this client connected to different servers. In this case
-/// one with newest certificate is chosen.
+/// Refer to the `ConnectRequest` for details.
 pub struct ConnectRequestBody {
     pub certificate: ConnectionCertificate,
     pub client: ClientInfo

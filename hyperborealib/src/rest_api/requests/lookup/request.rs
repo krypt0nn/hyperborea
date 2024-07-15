@@ -7,6 +7,9 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/lookup` request body.
+/// 
+/// Refer to `LookupRequest` for details.
 pub struct LookupRequestBody {
     pub public_key: PublicKey,
     pub client_type: Option<ClientType>

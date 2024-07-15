@@ -5,6 +5,12 @@ use crate::rest_api::prelude::*;
 use crate::STANDARD_VERSION;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// `GET /api/v1/clients` response.
+/// 
+/// This response is sent after the `GET /api/v1/clients` request.
+/// It should contain list of all the clients connected to the current server.
+/// This request can be used by other servers or clients to fulfill their own
+/// routing table or to perform custom client lookups.
 pub struct ClientsResponse {
     pub standard: u64,
     pub clients: Vec<Client>
@@ -13,10 +19,8 @@ pub struct ClientsResponse {
 impl ClientsResponse {
     /// Create new clients request response.
     /// 
-    /// This response is sent after the `GET /api/v1/clients` request.
-    /// It should contain list of all the clients connected to the current server.
-    /// This request can be used by other servers or clients to fulfill their own
-    /// routing table or to perform custom client lookups.
+    /// - `clients` must contain list of clients
+    ///   connected to the server.
     /// 
     /// # Example
     /// 
@@ -45,10 +49,10 @@ impl ClientsResponse {
     ///     client
     /// ]);
     /// ```
-    pub fn new(clients: Vec<Client>) -> Self {
+    pub fn new(clients: impl Into<Vec<Client>>) -> Self {
         Self {
             standard: STANDARD_VERSION,
-            clients
+            clients: clients.into()
         }
     }
 }
