@@ -14,6 +14,13 @@ use super::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Protocol's REST API response header.
+/// 
+/// According to the standard all the `POST` requests
+/// responses must follow the same top-level structure
+/// (contain a proper header) which is used to verify
+/// that the response is sent by a server with specified
+/// public key, and to identify the request's status.
 pub enum Response<T> {
     Success {
         standard: u64,
@@ -31,6 +38,38 @@ pub enum Response<T> {
 }
 
 impl<T> Response<T> {
+    /// Create successful response.
+    /// 
+    /// - `status` must contain status code of the response
+    ///   (`100 Success` in most cases).
+    /// 
+    /// - `public_key` must contain public key of the responder.
+    /// 
+    /// - `proof` must contain signature of the original request's
+    ///   proof seed signed by the responder's secret key
+    ///   (linked with the `public_key`).
+    /// 
+    /// - `response` can contain any value, preferably
+    ///   implementing `AsJson` trait.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let secret_key = SecretKey::random();
+    /// 
+    /// let proof_seed = safe_random_u64_long();
+    /// let proof_sign = secret_key.create_signature(proof_seed.to_be_bytes());
+    /// 
+    /// let response = Response::success(
+    ///     ResponseStatus::Success,
+    ///     secret_key.public_key(),
+    ///     proof_sign,
+    ///     ()
+    /// );
+    /// ```
     pub fn success(status: ResponseStatus, public_key: PublicKey, proof: impl Into<Vec<u8>>, response: T) -> Self {
         Self::Success {
             standard: STANDARD_VERSION,
@@ -41,6 +80,23 @@ impl<T> Response<T> {
         }
     }
 
+    /// Create error response.
+    /// 
+    /// - `status` must contain status code of the response.
+    /// 
+    /// - `reason` must contain the explanation string of the error
+    ///   (error message and/or description).
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let response = Response::error(
+    ///     ResponseStatus::ServerError,
+    ///     "Example error"
+    /// );
+    /// ```
     pub fn error(status: ResponseStatus, reason: impl ToString) -> Self {
         Self::Error {
             standard: STANDARD_VERSION,
@@ -49,6 +105,10 @@ impl<T> Response<T> {
         }
     }
 
+    /// Get `standard` field from the response header.
+    /// 
+    /// This is a helper function for easier work
+    /// with response enum.
     pub fn standard(&self) -> u64 {
         match self {
             Self::Success { standard, .. } |
@@ -56,6 +116,10 @@ impl<T> Response<T> {
         }
     }
 
+    /// Get `status` field from the response header.
+    /// 
+    /// This is a helper function for easier work
+    /// with response enum.
     pub fn status(&self) -> ResponseStatus {
         match self {
             Self::Success { status, .. } |
@@ -63,6 +127,48 @@ impl<T> Response<T> {
         }
     }
 
+    /// Validate that the response is correct (sent by a real server).
+    /// 
+    /// - `proof_seed` must contain proof seed
+    ///   sent in the original request.
+    /// 
+    /// > Note: error responses are always valid.
+    /// 
+    /// # Example
+    /// 
+    /// ## Success response
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let secret_key = SecretKey::random();
+    /// 
+    /// let proof_seed = safe_random_u64_long();
+    /// let proof_sign = secret_key.create_signature(proof_seed.to_be_bytes());
+    /// 
+    /// let response = Response::success(
+    ///     ResponseStatus::Success,
+    ///     secret_key.public_key(),
+    ///     proof_sign,
+    ///     ()
+    /// );
+    /// 
+    /// assert!(response.validate(proof_seed).unwrap(), true);
+    /// ```
+    /// 
+    /// ## Error response
+    /// 
+    /// ```rust
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let response = Response::error(
+    ///     ResponseStatus::ServerError,
+    ///     "Example error"
+    /// );
+    /// 
+    /// assert!(response.validate(0).unwrap(), true);
+    /// ```
     pub fn validate(&self, proof_seed: u64) -> Result<bool, ValidationError> {
         match self {
             Self::Success { public_key, proof_sign, .. } => {
@@ -178,7 +284,7 @@ impl<T: AsJson> AsJson for Response<T> {
 #[cfg(test)]
 mod tests {
     use crate::crypto::asymmetric::SecretKey;
-    use crate::rest_api::connect::ConnectResponse;
+    use crate::rest_api::requests::ConnectResponse;
 
     use super::*;
 

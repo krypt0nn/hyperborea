@@ -4,11 +4,16 @@ use crate::rest_api::{AsJson, AsJsonError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/connect` response body.
 pub struct ConnectResponseBody;
 
 impl ConnectResponseBody {
     #[inline]
     #[allow(clippy::new_without_default)]
+    /// Create connect response body.
+    /// 
+    /// It doesn't contain any important info
+    /// so everything is filled automatically.
     pub fn new() -> Self {
         Self
     }

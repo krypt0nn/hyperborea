@@ -10,6 +10,19 @@ pub const NONCE: [u8; 12] = [197, 93, 164, 33, 103, 79, 137, 143, 186, 253, 74, 
 /// Encrypt given value.
 /// 
 /// This function will automatically apply standard nonce.
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use hyperborealib::crypto::encryption::chacha20_poly1305;
+/// 
+/// let original = b"Hello, World!";
+/// let secret   = b"32 bytes long secret key .......";
+/// 
+/// let encrypted = chacha20_poly1305::encrypt(original, &secret);
+/// 
+/// assert_ne!(encrypted, original);
+/// ```
 pub fn encrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
     let key = Key::from_slice(secret);
 
@@ -20,6 +33,21 @@ pub fn encrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Err
 /// Decrypt given value.
 /// 
 /// This function will automatically apply standard nonce.
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use hyperborealib::crypto::encryption::chacha20_poly1305;
+/// 
+/// let original = b"Hello, World!";
+/// let secret   = b"32 bytes long secret key .......";
+/// 
+/// let encrypted = chacha20_poly1305::encrypt(original, &secret);
+/// let decrypted = chacha20_poly1305::decrypt(&encrypted, &secret);
+/// 
+/// assert_ne!(encrypted, original);
+/// assert_eq!(decrypted, original);
+/// ```
 pub fn decrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
     let key = Key::from_slice(secret);
 
@@ -31,6 +59,7 @@ pub fn decrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Err
 pub mod tests {
     use super::*;
 
+    #[test]
     pub fn encrypt_decrypt() -> Result<(), Error> {
         let key = b"amogus aboba banana aboba amogus";
 

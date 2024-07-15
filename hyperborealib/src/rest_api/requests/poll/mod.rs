@@ -3,44 +3,24 @@ use serde_json::Value as Json;
 use crate::crypto::prelude::*;
 use crate::rest_api::prelude::*;
 
-mod message_encoding;
-mod message;
-mod sender;
-
 mod request;
 mod response;
 
-pub use message_encoding::*;
-pub use message::*;
-pub use sender::*;
-
-pub use request::SendRequestBody;
-pub use response::SendResponseBody;
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("Wrong message encoding format provided: '{0}'")]
-    WrongMessageEncodingFormat(String),
-
-    #[error("Message's signature is invalid")]
-    InvalidMessageSignature,
-
-    #[error(transparent)]
-    CryptographyError(#[from] CryptographyError)
-}
+pub use request::*;
+pub use response::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SendRequest(pub Request<SendRequestBody>);
+pub struct PollRequest(pub Request<PollRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SendResponse(pub Response<SendResponseBody>);
+pub struct PollResponse(pub Response<PollResponseBody>);
 
-impl SendRequest {
+impl PollRequest {
     #[inline]
-    pub fn new(client_secret: &SecretKey, sender: Sender, receiver_public: PublicKey, channel: impl ToString, message: Message) -> Self {
-        Self(Request::new(client_secret, SendRequestBody::new(sender, receiver_public, channel, message)))
+    pub fn new(client_secret: &SecretKey, channel: impl ToString, limit: Option<u64>) -> Self {
+        Self(Request::new(client_secret, PollRequestBody::new(channel, limit)))
     }
 
     #[inline]
@@ -49,7 +29,7 @@ impl SendRequest {
     }
 }
 
-impl AsJson for SendRequest {
+impl AsJson for PollRequest {
     #[inline]
     fn to_json(&self) -> Result<Json, AsJsonError> {
         self.0.to_json()
@@ -61,15 +41,15 @@ impl AsJson for SendRequest {
     }
 }
 
-impl SendResponse {
-    pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64) -> Self {
+impl PollResponse {
+    pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64, response_body: PollResponseBody) -> Self {
         let proof = server_secret.create_signature(proof_seed.to_be_bytes());
 
         Self(Response::success(
             status,
             server_secret.public_key(),
             proof,
-            SendResponseBody::new()
+            response_body
         ))
     }
 
@@ -83,7 +63,7 @@ impl SendResponse {
     }
 }
 
-impl AsJson for SendResponse {
+impl AsJson for PollResponse {
     #[inline]
     fn to_json(&self) -> Result<Json, AsJsonError> {
         self.0.to_json()

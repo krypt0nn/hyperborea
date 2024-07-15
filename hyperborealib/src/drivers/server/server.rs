@@ -1,6 +1,6 @@
 use crate::drivers::ClientDriver;
 
-use crate::rest_api::connect::ClientInfo;
+use crate::rest_api::prelude::*;
 
 use super::router::global_table::GlobalTableRouter;
 use super::traversal::bfs_recursion::BfsRecursionTraversal;

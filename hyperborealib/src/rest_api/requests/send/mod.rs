@@ -3,45 +3,33 @@ use serde_json::Value as Json;
 use crate::crypto::prelude::*;
 use crate::rest_api::prelude::*;
 
-mod client_info;
-mod certificate;
 mod request;
 mod response;
 
-pub use client_info::{
-    ClientType,
-    ClientInfo
-};
-
-pub use certificate::{
-    ConnectionToken,
-    ConnectionCertificate
-};
-
-pub use request::ConnectRequestBody;
-pub use response::ConnectResponseBody;
+pub use request::SendRequestBody;
+pub use response::SendResponseBody;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ConnectRequest(pub Request<ConnectRequestBody>);
+pub struct SendRequest(pub Request<SendRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ConnectResponse(pub Response<ConnectResponseBody>);
+pub struct SendResponse(pub Response<SendResponseBody>);
 
-impl ConnectRequest {
+impl SendRequest {
     #[inline]
-    pub fn new(client_secret: &SecretKey, server_public: PublicKey, client: ClientInfo) -> Self {
-        Self(Request::new(client_secret, ConnectRequestBody::new(client_secret, server_public, client)))
+    pub fn new(client_secret: &SecretKey, sender: Sender, receiver_public: PublicKey, channel: impl ToString, message: Message) -> Self {
+        Self(Request::new(client_secret, SendRequestBody::new(sender, receiver_public, channel, message)))
     }
 
     #[inline]
-    pub fn validate(&self, server_public: &PublicKey) -> Result<bool, ValidationError> {
-        Ok(self.0.validate()? && self.0.request.certificate.validate(&self.0.public_key, server_public)?)
+    pub fn validate(&self) -> Result<bool, ValidationError> {
+        self.0.validate()
     }
 }
 
-impl AsJson for ConnectRequest {
+impl AsJson for SendRequest {
     #[inline]
     fn to_json(&self) -> Result<Json, AsJsonError> {
         self.0.to_json()
@@ -53,7 +41,7 @@ impl AsJson for ConnectRequest {
     }
 }
 
-impl ConnectResponse {
+impl SendResponse {
     pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64) -> Self {
         let proof = server_secret.create_signature(proof_seed.to_be_bytes());
 
@@ -61,7 +49,7 @@ impl ConnectResponse {
             status,
             server_secret.public_key(),
             proof,
-            ConnectResponseBody::new()
+            SendResponseBody::new()
         ))
     }
 
@@ -75,7 +63,7 @@ impl ConnectResponse {
     }
 }
 
-impl AsJson for ConnectResponse {
+impl AsJson for SendResponse {
     #[inline]
     fn to_json(&self) -> Result<Json, AsJsonError> {
         self.0.to_json()

@@ -1,32 +1,29 @@
 use serde_json::{json, Value as Json};
 
-use crate::rest_api::{AsJson, AsJsonError};
-
-use crate::rest_api::clients::Client as ClientApiRecord;
-use crate::rest_api::servers::Server as ServerApiRecord;
+use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum LookupResponseBody {
     Local {
-        client: ClientApiRecord,
+        client: Client,
         available: bool
     },
 
     Remote {
-        client: ClientApiRecord,
-        server: ServerApiRecord,
+        client: Client,
+        server: Server,
         available: bool
     },
 
     Hint {
-        servers: Vec<ServerApiRecord>
+        servers: Vec<Server>
     }
 }
 
 impl LookupResponseBody {
     #[inline]
-    pub fn local(client: ClientApiRecord, available: bool) -> Self {
+    pub fn local(client: Client, available: bool) -> Self {
         Self::Local {
             client,
             available
@@ -34,7 +31,7 @@ impl LookupResponseBody {
     }
 
     #[inline]
-    pub fn remote(client: ClientApiRecord, server: ServerApiRecord, available: bool) -> Self {
+    pub fn remote(client: Client, server: Server, available: bool) -> Self {
         Self::Remote {
             client,
             server,
@@ -43,7 +40,7 @@ impl LookupResponseBody {
     }
 
     #[inline]
-    pub fn hint(servers: Vec<ServerApiRecord>) -> Self {
+    pub fn hint(servers: Vec<Server>) -> Self {
         Self::Hint {
             servers
         }
@@ -103,7 +100,7 @@ impl AsJson for LookupResponseBody {
                 };
 
                 Ok(Self::Local {
-                    client: ClientApiRecord::from_json(client)?,
+                    client: Client::from_json(client)?,
 
                     available: result.get("available")
                         .and_then(Json::as_bool)
@@ -121,8 +118,8 @@ impl AsJson for LookupResponseBody {
                 };
 
                 Ok(Self::Remote {
-                    client: ClientApiRecord::from_json(client)?,
-                    server: ServerApiRecord::from_json(server)?,
+                    client: Client::from_json(client)?,
+                    server: Server::from_json(server)?,
 
                     available: result.get("available")
                         .and_then(Json::as_bool)
@@ -150,11 +147,6 @@ impl AsJson for LookupResponseBody {
 mod tests {
     use crate::crypto::asymmetric::SecretKey;
 
-    use crate::rest_api::connect::{
-        ConnectionCertificate,
-        ClientInfo
-    };
-
     use super::*;
 
     #[test]
@@ -164,7 +156,7 @@ mod tests {
 
         let cert = ConnectionCertificate::new(&secret, public.clone());
 
-        let client = ClientApiRecord::new(
+        let client = Client::new(
             public,
             cert,
             ClientInfo::thin(),
@@ -184,13 +176,13 @@ mod tests {
 
         let cert = ConnectionCertificate::new(&secret, public.clone());
 
-        let client = ClientApiRecord::new(
+        let client = Client::new(
             public.clone(),
             cert,
             ClientInfo::thin(),
         );
 
-        let server = ServerApiRecord::new(public, "Hello, World!");
+        let server = Server::new(public, "Hello, World!");
 
         let response = LookupResponseBody::remote(client, server, true);
 
@@ -204,7 +196,7 @@ mod tests {
         let public = SecretKey::random().public_key();
 
         let response = LookupResponseBody::hint(vec![
-            ServerApiRecord::new(public, "Hello, World!")
+            Server::new(public, "Hello, World!")
         ]);
 
         assert_eq!(LookupResponseBody::from_json(&response.to_json()?)?, response);

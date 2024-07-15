@@ -10,6 +10,19 @@ pub const NONCE: [u8; 12] = [234, 90, 0, 39, 141, 73, 94, 100, 178, 97, 128, 118
 /// Encrypt given value.
 /// 
 /// This function will automatically apply standard nonce.
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use hyperborealib::crypto::encryption::aes256_gcm;
+/// 
+/// let original = b"Hello, World!";
+/// let secret   = b"32 bytes long secret key .......";
+/// 
+/// let encrypted = aes256_gcm::encrypt(original, &secret);
+/// 
+/// assert_ne!(encrypted, original);
+/// ```
 pub fn encrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
     let key = Key::<Aes256Gcm>::from_slice(secret);
 
@@ -20,6 +33,21 @@ pub fn encrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Err
 /// Decrypt given value.
 /// 
 /// This function will automatically apply standard nonce.
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use hyperborealib::crypto::encryption::aes256_gcm;
+/// 
+/// let original = b"Hello, World!";
+/// let secret   = b"32 bytes long secret key .......";
+/// 
+/// let encrypted = aes256_gcm::encrypt(original, &secret);
+/// let decrypted = aes256_gcm::decrypt(&encrypted, &secret);
+/// 
+/// assert_ne!(encrypted, original);
+/// assert_eq!(decrypted, original);
+/// ```
 pub fn decrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
     let key = Key::<Aes256Gcm>::from_slice(secret);
 
@@ -31,6 +59,7 @@ pub fn decrypt(data: impl AsRef<[u8]>, secret: &[u8; 32]) -> Result<Vec<u8>, Err
 pub mod tests {
     use super::*;
 
+    #[test]
     pub fn encrypt_decrypt() -> Result<(), Error> {
         let key = b"amogus aboba banana aboba amogus";
 

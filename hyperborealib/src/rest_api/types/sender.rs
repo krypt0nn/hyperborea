@@ -1,11 +1,6 @@
 use serde_json::{json, Value as Json};
 
-use crate::rest_api::prelude::{
-    Client,
-    Server,
-    AsJson,
-    AsJsonError
-};
+use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,6 +11,26 @@ pub struct Sender {
 
 impl Sender {
     #[inline]
+    /// Create description of the message sender.
+    /// 
+    /// - `client` must contain information about the client
+    ///   which sent the message. This value is used to sign
+    ///   the response message and address it to the server inbox.
+    /// 
+    /// - `server` must contain information about globally accessible
+    ///   server which can be used by the client to receive the response
+    ///   on the sent message. It is recommended to avoid using loopback
+    ///   servers (the same value as in current server) because such things
+    ///   can be blocked by the servers implementations.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// 
+    /// ```
     pub fn new(client: Client, server: Server) -> Self {
         Self {
             client,
@@ -46,24 +61,19 @@ impl AsJson for Sender {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::crypto::asymmetric::SecretKey;
-    use crate::rest_api::prelude::*;
+pub(crate) mod tests {
+    use super::client::tests::get_client;
+    use super::server::tests::get_server;
 
     use super::*;
 
+    pub fn get_sender() -> Sender {
+        Sender::new(get_client(), get_server())
+    }
+
     #[test]
     fn serialize() -> Result<(), AsJsonError> {
-        let client = SecretKey::random();
-        let server = SecretKey::random();
-
-        let info = ClientInfo::thin();
-        let cert = ConnectionCertificate::new(&client, server.public_key());
-
-        let client = Client::new(client.public_key(), cert, info);
-        let server = Server::new(server.public_key(), "amogus");
-
-        let sender = Sender::new(client, server);
+        let sender = get_sender();
 
         assert_eq!(Sender::from_json(&sender.to_json()?)?, sender);
 

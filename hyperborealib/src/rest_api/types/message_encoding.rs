@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::crypto::prelude::*;
 
-use super::Error;
+use super::MessagesError;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,7 +24,7 @@ impl MessageEncoding {
 
     /// Apply compression, encryption and encoding
     /// to the given data.
-    pub fn forward(&self, message: impl AsRef<[u8]>, secret: &[u8; 32], level: CompressionLevel) -> Result<String, Error> {
+    pub fn forward(&self, message: impl AsRef<[u8]>, secret: &[u8; 32], level: CompressionLevel) -> Result<String, MessagesError> {
         let message = self.compression.compress(message, level)?;
         let message = self.encryption.encrypt(message, secret)?;
 
@@ -33,7 +33,7 @@ impl MessageEncoding {
 
     /// Cease compression, encryption and encoding
     /// from the given data.
-    pub fn backward(&self, message: impl AsRef<str>, secret: &[u8; 32]) -> Result<Vec<u8>, Error> {
+    pub fn backward(&self, message: impl AsRef<str>, secret: &[u8; 32]) -> Result<Vec<u8>, MessagesError> {
         let message = self.encoding.decode(message)?;
         let message = self.encryption.decrypt(message, secret)?;
 
@@ -42,7 +42,7 @@ impl MessageEncoding {
 }
 
 impl FromStr for MessageEncoding {
-    type Err = Error;
+    type Err = MessagesError;
 
     fn from_str(str: &str) -> Result<Self, Self::Err> {
         let parts = str.split('/')
@@ -89,7 +89,7 @@ impl FromStr for MessageEncoding {
                 })
             }
 
-            _ => Err(Error::WrongMessageEncodingFormat(str.to_string()))
+            _ => Err(MessagesError::WrongMessageEncodingFormat(str.to_string()))
         }
     }
 }
@@ -109,7 +109,7 @@ impl std::fmt::Display for MessageEncoding {
 pub(crate) mod tests {
     use super::*;
 
-    pub fn encodings() -> Result<Vec<MessageEncoding>, Error> {
+    pub fn get_encodings() -> Result<Vec<MessageEncoding>, MessagesError> {
         Ok(vec![
             MessageEncoding::from_str("base64")?,
 
@@ -127,10 +127,10 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn parse() -> Result<(), Error> {
+    fn parse() -> Result<(), MessagesError> {
         assert!(MessageEncoding::from_str("aboba").is_err());
 
-        for encoding in encodings()? {
+        for encoding in get_encodings()? {
             assert_eq!(MessageEncoding::from_str(&encoding.to_string())?, encoding);
         }
 

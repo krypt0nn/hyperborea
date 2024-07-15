@@ -55,6 +55,8 @@ pub enum CompressionLevel {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// General data compression implementation.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use std::str::FromStr;
 /// 
@@ -85,6 +87,8 @@ pub enum Compression {
 impl Compression {
     /// Compress given data with selected compression algorithm.
     /// 
+    /// # Example
+    /// 
     /// ```rust
     /// use hyperborealib::crypto::compression::{Compression, CompressionLevel};
     /// 
@@ -110,6 +114,8 @@ impl Compression {
     }
 
     /// Decompress given data with selected compression algorithm.
+    /// 
+    /// # Example
     /// 
     /// ```rust
     /// use hyperborealib::crypto::compression::{Compression, CompressionLevel};

@@ -15,6 +15,8 @@ pub mod prelude {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// General binary data encodings implementation.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use std::str::FromStr;
 /// 
@@ -34,6 +36,8 @@ pub enum Encoding {
 impl Encoding {
     /// Encode given binary data using selected text encoding.
     /// 
+    /// # Example
+    /// 
     /// ```rust
     /// use hyperborealib::crypto::encoding::Encoding;
     /// 
@@ -46,6 +50,8 @@ impl Encoding {
     }
 
     /// Decode given text into a binary data using selected encoding.
+    /// 
+    /// # Example
     /// 
     /// ```rust
     /// use hyperborealib::crypto::encoding::Encoding;

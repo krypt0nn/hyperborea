@@ -12,6 +12,13 @@ use super::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Protocol's REST API requests header.
+/// 
+/// According to the standard all the `POST` requests
+/// must follow the same top-level structure
+/// (contain a proper header) which is used to verify
+/// that the request is sent by a client with specified
+/// public key.
 pub struct Request<T> {
     pub standard: u64,
     pub public_key: PublicKey,
@@ -21,6 +28,24 @@ pub struct Request<T> {
 }
 
 impl<T> Request<T> {
+    /// Create new REST API request.
+    /// 
+    /// - `client_secret` must contain reference to
+    ///   the secret key of the request's sender.
+    ///   It is used to sign random number to validate
+    ///   this request.
+    /// 
+    /// - `request` can contain any value, preferably
+    ///   implementing `AsJson` trait.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let request = Request::new(&SecretKey::random(), ());
+    /// ```
     pub fn new(client_secret: &SecretKey, request: T) -> Self {
         let proof_seed = safe_random_u64_long();
 
@@ -35,6 +60,29 @@ impl<T> Request<T> {
         }
     }
 
+    /// Validate that the request's header is correct.
+    /// 
+    /// This method will verify that the proof signature
+    /// is signed correctly by the sender using given public key.
+    /// 
+    /// This method will also verify that the proof seed
+    /// is correctly chosen (`>= 1^63`). This is important
+    /// for signature generation to not to have many zero bytes.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// // Create random secret key
+    /// let secret_key = SecretKey::random();
+    /// 
+    /// // Create empty request
+    /// let request = Request::new(&secret_key, ());
+    /// 
+    /// assert_eq!(request.validate(), Ok(true));
+    /// ```
     pub fn validate(&self) -> Result<bool, ValidationError> {
         if self.proof_seed < 1 << 63 {
             return Err(ValidationError::InvalidSeed);
@@ -109,8 +157,8 @@ impl<T: AsJson> AsJson for Request<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::crypto::asymmetric::SecretKey;
-    use crate::rest_api::connect::{ConnectRequest, ClientInfo};
+    use crate::rest_api::requests::ConnectRequest;
+    use crate::rest_api::types::ClientInfo;
 
     use super::*;
 
@@ -128,6 +176,43 @@ mod tests {
         let request = Request::new(&secret, connect_request);
 
         assert_eq!(Request::from_json(&request.to_json()?)?, request);
+
+        Ok(())
+    }
+
+    #[test]
+    fn validate() -> Result<(), ValidationError> {
+        let secret_key = SecretKey::random();
+
+        // Valid request header
+
+        let request = Request::new(&secret_key, ());
+
+        assert!(request.validate()?);
+
+        // Invalid proof seed
+
+        let mut request = Request::new(&secret_key, ());
+
+        request.proof_seed = 0;
+
+        assert!(request.validate().is_err());
+
+        // Invalid sign (different proof seed)
+
+        let mut request = Request::new(&secret_key, ());
+
+        request.proof_seed = safe_random_u64_long();
+
+        assert!(!request.validate()?);
+
+        // Invalid sign (different proof sign)
+
+        let mut request = Request::new(&secret_key, ());
+
+        request.proof_sign = vec![1, 2, 3, 4, 5, 6, 7, 8];
+
+        assert!(!request.validate()?);
 
         Ok(())
     }

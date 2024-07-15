@@ -1,51 +1,8 @@
 use serde_json::{json, Value as Json};
 
-use crate::crypto::asymmetric::PublicKey;
-
-use crate::rest_api::{AsJson, AsJsonError};
+use crate::rest_api::prelude::*;
 
 use crate::STANDARD_VERSION;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Server {
-    pub public_key: PublicKey,
-    pub address: String
-}
-
-impl Server {
-    #[inline]
-    pub fn new(public_key: PublicKey, address: impl ToString) -> Self {
-        Self {
-            public_key,
-            address: address.to_string()
-        }
-    }
-}
-
-impl AsJson for Server {
-    fn to_json(&self) -> Result<Json, AsJsonError> {
-        Ok(json!({
-            "public_key": self.public_key.to_base64(),
-            "address": self.address
-        }))
-    }
-
-    fn from_json(json: &Json) -> Result<Self, AsJsonError> where Self: Sized {
-        let Some(public_key) = json.get("public_key").and_then(Json::as_str) else {
-            return Err(AsJsonError::FieldNotFound("public_key"));
-        };
-
-        let Some(address) = json.get("address").and_then(Json::as_str) else {
-            return Err(AsJsonError::FieldNotFound("address"));
-        };
-
-        Ok(Server {
-            public_key: PublicKey::from_base64(public_key)?,
-            address: address.to_string()
-        })
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -55,10 +12,10 @@ pub struct ServersResponse {
 }
 
 impl ServersResponse {
-    pub fn new(servers: Vec<Server>) -> Self {
+    pub fn new(servers: impl Into<Vec<Server>>) -> Self {
         Self {
             standard: STANDARD_VERSION,
-            servers
+            servers: servers.into()
         }
     }
 }

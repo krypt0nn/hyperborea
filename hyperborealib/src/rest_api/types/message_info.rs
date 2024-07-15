@@ -64,12 +64,16 @@ impl AsJson for MessageInfo {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::str::FromStr;
 
     use crate::crypto::asymmetric::SecretKey;
 
     use super::*;
+
+    pub fn get_message_info() -> MessageInfo {
+        todo!()
+    }
 
     #[test]
     fn serialize() -> Result<(), AsJsonError> {

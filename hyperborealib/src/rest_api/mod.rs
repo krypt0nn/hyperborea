@@ -5,15 +5,9 @@ use crate::crypto::Error as CryptographyError;
 pub mod request;
 pub mod response;
 pub mod status;
+pub mod types;
+pub mod requests;
 pub mod middleware;
-
-pub mod info;
-pub mod clients;
-pub mod servers;
-pub mod connect;
-pub mod lookup;
-pub mod send;
-pub mod poll;
 
 pub mod prelude {
     pub use super::{
@@ -26,59 +20,13 @@ pub mod prelude {
     pub use super::response::Response;
     pub use super::status::ResponseStatus;
 
+    pub use super::types::*;
+    pub use super::requests::*;
+
     pub use super::middleware::{
         Client as ClientMiddleware,
         Server as ServerMiddleware,
         Error as MiddlewareError
-    };
-
-    pub use super::info::InfoResponse;
-
-    pub use super::clients::{
-        Client,
-        ClientsResponse
-    };
-
-    pub use super::servers::{
-        Server,
-        ServersResponse
-    };
-
-    pub use super::connect::{
-        ClientType,
-        ClientInfo,
-        ConnectionCertificate,
-        ConnectionToken,
-        ConnectRequest,
-        ConnectRequestBody,
-        ConnectResponse,
-        ConnectResponseBody
-    };
-
-    pub use super::lookup::{
-        LookupRequest,
-        LookupRequestBody,
-        LookupResponse,
-        LookupResponseBody
-    };
-
-    pub use super::send::{
-        MessageEncoding,
-        Message,
-        Sender,
-        SendRequest,
-        SendRequestBody,
-        SendResponse,
-        SendResponseBody,
-        Error as SendError
-    };
-
-    pub use super::poll::{
-        MessageInfo,
-        PollRequest,
-        PollRequestBody,
-        PollResponse,
-        PollResponseBody
     };
 }
 

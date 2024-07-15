@@ -4,6 +4,8 @@ use rand_chacha::rand_core::{SeedableRng, RngCore};
 #[inline]
 /// Generate random u64 number.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use hyperborealib::crypto::utils::safe_random_u64;
 /// 
@@ -20,6 +22,8 @@ pub fn safe_random_u64() -> u64 {
 /// This method uses `safe_random_u64` function and ensures
 /// that the really first major bit is 1, making the number
 /// start from `2^63`.
+/// 
+/// # Example
 /// 
 /// ```rust
 /// use hyperborealib::crypto::utils::safe_random_u64_long;

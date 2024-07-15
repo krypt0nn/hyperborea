@@ -11,6 +11,8 @@ lazy_static::lazy_static! {
 #[inline]
 /// Encode given binary data to the 64 base number.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use hyperborealib::crypto::encoding::base64;
 /// 
@@ -22,6 +24,8 @@ pub fn encode(bytes: impl AsRef<[u8]>) -> String {
 
 #[inline]
 /// Decode given base 64 number into a binary data.
+/// 
+/// # Example
 /// 
 /// ```rust
 /// use hyperborealib::crypto::encoding::base64;
@@ -36,6 +40,7 @@ pub fn decode(string: impl AsRef<str>) -> Result<Vec<u8>, base64::DecodeError> {
 pub mod tests {
     use super::*;
 
+    #[test]
     pub fn encode_decode() -> Result<(), base64::DecodeError> {
         assert_eq!(decode(encode(b"Hello, World!"))?, b"Hello, World!");
 

@@ -1,5 +1,5 @@
 use crate::crypto::asymmetric::SecretKey;
-use crate::rest_api::connect::ClientInfo;
+use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClientDriver {

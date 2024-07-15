@@ -1,48 +1,9 @@
+use std::str::FromStr;
+
 use serde_json::{json, Value as Json};
 
 use crate::rest_api::{AsJson, AsJsonError};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ClientType {
-    Thin,
-    Thick,
-    Server,
-    File
-}
-
-impl Default for ClientType {
-    #[inline]
-    fn default() -> Self {
-        Self::Thin
-    }
-}
-
-impl std::fmt::Display for ClientType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Thin   => write!(f, "thin"),
-            Self::Thick  => write!(f, "thick"),
-            Self::Server => write!(f, "server"),
-            Self::File   => write!(f, "file")
-        }
-    }
-}
-
-impl TryFrom<&str> for ClientType {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "thin"   => Ok(Self::Thin),
-            "thick"  => Ok(Self::Thick),
-            "server" => Ok(Self::Server),
-            "file"   => Ok(Self::File),
-
-            _ => Err(())
-        }
-    }
-}
+use crate::rest_api::types::ClientType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -73,7 +34,7 @@ impl AsJson for ClientInfo {
         Ok(Self {
             client_type: json.get("type")
                 .and_then(Json::as_str)
-                .map(ClientType::try_from)
+                .map(ClientType::from_str)
                 .ok_or_else(|| AsJsonError::FieldNotFound("type"))?
                 .map_err(|_| AsJsonError::FieldValueInvalid("client type field contains unknown value"))?,
 
@@ -131,44 +92,36 @@ mod tests {
     use super::*;
 
     #[test]
-    #[allow(clippy::useless_conversion)]
     fn serialize_thin() -> Result<(), AsJsonError> {
         let client = ClientInfo::thin();
 
-        assert_eq!(ClientType::try_from(ClientType::Thin), Ok(ClientType::Thin));
         assert_eq!(ClientInfo::from_json(&client.to_json()?)?, client);
 
         Ok(())
     }
 
     #[test]
-    #[allow(clippy::useless_conversion)]
     fn serialize_thick() -> Result<(), AsJsonError> {
         let client = ClientInfo::thick("Hello, World!");
 
-        assert_eq!(ClientType::try_from(ClientType::Thick), Ok(ClientType::Thick));
         assert_eq!(ClientInfo::from_json(&client.to_json()?)?, client);
 
         Ok(())
     }
 
     #[test]
-    #[allow(clippy::useless_conversion)]
     fn serialize_server() -> Result<(), AsJsonError> {
         let client = ClientInfo::server("Hello, World!");
 
-        assert_eq!(ClientType::try_from(ClientType::Server), Ok(ClientType::Server));
         assert_eq!(ClientInfo::from_json(&client.to_json()?)?, client);
 
         Ok(())
     }
 
     #[test]
-    #[allow(clippy::useless_conversion)]
     fn serialize_file() -> Result<(), AsJsonError> {
         let client = ClientInfo::file("Hello, World!");
 
-        assert_eq!(ClientType::try_from(ClientType::File), Ok(ClientType::File));
         assert_eq!(ClientInfo::from_json(&client.to_json()?)?, client);
 
         Ok(())

@@ -1,12 +1,19 @@
 use serde_json::{json, Value as Json};
 
 use crate::crypto::prelude::*;
-use crate::rest_api::{AsJson, AsJsonError};
+use crate::rest_api::prelude::*;
 
 use crate::STANDARD_VERSION;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `GET /api/v1/info` response.
+/// 
+/// This API should provide general information about
+/// the protocol's server. This information
+/// can be used by clients to choose whether they should
+/// connect to this server, or to get this server's public key
+/// for further API calls.
 pub struct InfoResponse {
     pub standard: u64,
     pub public_key: PublicKey,
@@ -28,6 +35,17 @@ impl InfoResponse {
             proof_seed,
             proof_sign
         }
+    }
+
+    pub fn validate(&self) -> Result<bool, ValidationError> {
+        if self.proof_seed < 1 << 63 {
+            return Err(ValidationError::InvalidSeed);
+        }
+
+        Ok(self.public_key.verify_signature(
+            self.proof_seed.to_be_bytes(),
+            &self.proof_sign
+        )?)
     }
 }
 

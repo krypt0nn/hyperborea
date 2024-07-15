@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde_json::{json, Value as Json};
 
 use crate::crypto::prelude::*;
@@ -37,7 +39,7 @@ impl AsJson for LookupRequestBody {
 
             client_type: json.get("type")
                 .and_then(Json::as_str)
-                .map(ClientType::try_from)
+                .map(ClientType::from_str)
                 .transpose()
                 .map_err(|_| AsJsonError::FieldValueInvalid("Invalid client type value"))?
         })

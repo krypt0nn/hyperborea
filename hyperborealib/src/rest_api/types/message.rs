@@ -5,7 +5,7 @@ use serde_json::{json, Value as Json};
 use crate::crypto::prelude::*;
 use crate::rest_api::{AsJson, AsJsonError};
 
-use super::{MessageEncoding, Error};
+use super::{MessageEncoding, MessagesError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -32,7 +32,7 @@ impl Message {
     /// 
     /// Signature and shared secret key is calculated using `sender`
     /// and `receiver` keys.
-    pub fn create(sender: &SecretKey, receiver: &PublicKey, data: impl AsRef<[u8]>, encoding: MessageEncoding, level: CompressionLevel) -> Result<Self, Error> {
+    pub fn create(sender: &SecretKey, receiver: &PublicKey, data: impl AsRef<[u8]>, encoding: MessageEncoding, level: CompressionLevel) -> Result<Self, MessagesError> {
         let secret = sender.create_shared_secret(receiver, None);
 
         let sign = sender.create_signature(data.as_ref());
@@ -48,14 +48,14 @@ impl Message {
     /// 
     /// This method will decrypt, decompress and decode stored
     /// message's content and validate its signature.
-    pub fn read(&self, receiver: &SecretKey, sender: &PublicKey) -> Result<Vec<u8>, Error> {
+    pub fn read(&self, receiver: &SecretKey, sender: &PublicKey) -> Result<Vec<u8>, MessagesError> {
         let secret = receiver.create_shared_secret(sender, None);
 
         let content = self.encoding.backward(&self.content, &secret)?;
         let sign = self.encoding.backward(&self.sign, &secret)?;
 
         if !sender.verify_signature(&content, sign)? {
-            return Err(Error::InvalidMessageSignature);
+            return Err(MessagesError::InvalidMessageSignature);
         }
 
         Ok(content)
@@ -94,7 +94,7 @@ impl AsJson for Message {
 
 #[cfg(test)]
 mod tests {
-    use crate::rest_api::send::message_encoding::tests::encodings;
+    use crate::rest_api::types::message_encoding::tests::get_encodings;
 
     use super::*;
 
@@ -103,7 +103,7 @@ mod tests {
         let sender = SecretKey::random();
         let receiver = SecretKey::random();
 
-        for encoding in encodings().unwrap() {
+        for encoding in get_encodings().unwrap() {
             let message = Message::create(
                 &sender,
                 &receiver.public_key(),
@@ -119,18 +119,18 @@ mod tests {
     }
 
     #[test]
-    fn create_read() -> Result<(), Error> {
+    fn create_read() -> Result<(), MessagesError> {
         let sender = SecretKey::random();
         let receiver = SecretKey::random();
 
-        for encoding in encodings().unwrap() {
+        for encoding in get_encodings()? {
             let message = Message::create(
                 &sender,
                 &receiver.public_key(),
                 b"Hello, World!",
                 encoding,
                 CompressionLevel::default()
-            ).unwrap();
+            )?;
 
             assert_eq!(message.read(&receiver, &sender.public_key())?, b"Hello, World!");
         }

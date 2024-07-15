@@ -51,6 +51,8 @@ pub enum Encryption {
 impl Encryption {
     /// Encrypt given data using selected encryption algorithm.
     /// 
+    /// # Example
+    /// 
     /// ```rust
     /// use hyperborealib::crypto::encryption::Encryption;
     /// 
@@ -76,6 +78,8 @@ impl Encryption {
     }
 
     /// Encrypt given data using selected encryption algorithm.
+    /// 
+    /// # Example
     /// 
     /// ```rust
     /// use hyperborealib::crypto::encryption::Encryption;
@@ -143,7 +147,7 @@ mod tests {
     }
 
     #[test]
-    fn encryption_decryption() -> Result<(), Error> {
+    fn encrypt_decrypt() -> Result<(), Error> {
         let key = b"amogus aboba banana aboba amogus";
 
         for (encryption, _) in encryptions() {

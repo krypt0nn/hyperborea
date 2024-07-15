@@ -3,37 +3,33 @@ use serde_json::Value as Json;
 use crate::crypto::prelude::*;
 use crate::rest_api::prelude::*;
 
-mod message_info;
-
 mod request;
 mod response;
 
-pub use message_info::*;
-
-pub use request::*;
-pub use response::*;
+pub use request::ConnectRequestBody;
+pub use response::ConnectResponseBody;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PollRequest(pub Request<PollRequestBody>);
+pub struct ConnectRequest(pub Request<ConnectRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PollResponse(pub Response<PollResponseBody>);
+pub struct ConnectResponse(pub Response<ConnectResponseBody>);
 
-impl PollRequest {
+impl ConnectRequest {
     #[inline]
-    pub fn new(client_secret: &SecretKey, channel: impl ToString, limit: Option<u64>) -> Self {
-        Self(Request::new(client_secret, PollRequestBody::new(channel, limit)))
+    pub fn new(client_secret: &SecretKey, server_public: PublicKey, client: ClientInfo) -> Self {
+        Self(Request::new(client_secret, ConnectRequestBody::new(client_secret, server_public, client)))
     }
 
     #[inline]
-    pub fn validate(&self) -> Result<bool, ValidationError> {
-        self.0.validate()
+    pub fn validate(&self, server_public: &PublicKey) -> Result<bool, ValidationError> {
+        Ok(self.0.validate()? && self.0.request.certificate.validate(&self.0.public_key, server_public)?)
     }
 }
 
-impl AsJson for PollRequest {
+impl AsJson for ConnectRequest {
     #[inline]
     fn to_json(&self) -> Result<Json, AsJsonError> {
         self.0.to_json()
@@ -45,15 +41,15 @@ impl AsJson for PollRequest {
     }
 }
 
-impl PollResponse {
-    pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64, response_body: PollResponseBody) -> Self {
+impl ConnectResponse {
+    pub fn success(status: ResponseStatus, server_secret: &SecretKey, proof_seed: u64) -> Self {
         let proof = server_secret.create_signature(proof_seed.to_be_bytes());
 
         Self(Response::success(
             status,
             server_secret.public_key(),
             proof,
-            response_body
+            ConnectResponseBody::new()
         ))
     }
 
@@ -67,7 +63,7 @@ impl PollResponse {
     }
 }
 
-impl AsJson for PollResponse {
+impl AsJson for ConnectResponse {
     #[inline]
     fn to_json(&self) -> Result<Json, AsJsonError> {
         self.0.to_json()

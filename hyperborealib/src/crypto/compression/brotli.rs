@@ -35,6 +35,8 @@ impl From<CompressionLevel> for BrotliEncoderParams {
 
 /// Compress given data using brotli compression algorithm.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use hyperborealib::crypto::compression::{CompressionLevel, brotli};
 /// 
@@ -59,6 +61,8 @@ pub fn compress(data: impl AsRef<[u8]>, level: CompressionLevel) -> std::io::Res
 
 /// Decompress given data using brotli compression algorithm.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use hyperborealib::crypto::compression::{CompressionLevel, brotli};
 /// 
@@ -82,6 +86,7 @@ pub fn decompress(data: impl AsRef<[u8]>) -> std::io::Result<Vec<u8>> {
 pub mod tests {
     use super::*;
 
+    #[test]
     pub fn compress_decompress() -> std::io::Result<()> {
         let level = CompressionLevel::default();
 

@@ -17,6 +17,8 @@ impl From<CompressionLevel> for Compression {
 
 /// Compress given data using deflate compression algorithm.
 /// 
+/// # Example
+/// 
 /// ```rust
 /// use hyperborealib::crypto::compression::{CompressionLevel, deflate};
 /// 
@@ -40,6 +42,8 @@ pub fn compress(data: impl AsRef<[u8]>, level: CompressionLevel) -> std::io::Res
 }
 
 /// Decompress given data using deflate compression algorithm.
+/// 
+/// # Example
 /// 
 /// ```rust
 /// use hyperborealib::crypto::compression::{CompressionLevel, deflate};
@@ -65,6 +69,7 @@ pub fn decompress(data: impl AsRef<[u8]>) -> std::io::Result<Vec<u8>> {
 pub mod tests {
     use super::*;
 
+    #[test]
     pub fn compress_decompress() -> std::io::Result<()> {
         let level = CompressionLevel::default();
 
