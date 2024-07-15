@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use hyperborealib::crypto::SecretKey;
+use hyperborealib::crypto::asymmetric::SecretKey;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

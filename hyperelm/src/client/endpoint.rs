@@ -1,4 +1,4 @@
-use hyperborealib::crypto::PublicKey;
+use hyperborealib::crypto::asymmetric::PublicKey;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

@@ -1,8 +1,10 @@
 use serde_json::{json, Value as Json};
 
 use hyperborealib::exports::tokio;
-use hyperborealib::crypto::*;
+
 use hyperborealib::http::HttpClient;
+
+use hyperborealib::crypto::prelude::*;
 use hyperborealib::rest_api::prelude::*;
 
 use super::*;
@@ -19,7 +21,7 @@ pub enum ClientAppError<E: Send + Sync> {
     MiddlewareError(#[from] MiddlewareError),
 
     #[error(transparent)]
-    SendError(#[from] SendError),
+    MessagesError(#[from] MessagesError),
 
     #[error(transparent)]
     Custom(E)
@@ -116,7 +118,8 @@ pub trait ClientApp {
             &params.client_secret,
             &endpoint.client_public,
             serde_json::to_vec(&request)?,
-            params.encoding
+            params.encoding,
+            params.compression_level
         )?;
 
         middlewire.send(
@@ -170,7 +173,8 @@ pub trait ClientApp {
             &params.client_secret,
             &endpoint.client_public,
             serde_json::to_vec(&message)?,
-            params.encoding
+            params.encoding,
+            params.compression_level
         )?;
 
         // Send message
@@ -216,7 +220,8 @@ pub trait ClientApp {
                         &params.client_secret,
                         &message_info.sender.client.public_key,
                         serde_json::to_vec(&response.to_json()?)?,
-                        params.encoding
+                        params.encoding,
+                        params.compression_level
                     )?;
 
                     middlewire.send(

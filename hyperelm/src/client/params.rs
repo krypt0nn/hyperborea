@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use hyperborealib::crypto::*;
+use hyperborealib::crypto::prelude::*;
 use hyperborealib::rest_api::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -19,6 +19,9 @@ pub struct ClientAppParams {
 
     /// Messages encoding format.
     pub encoding: MessageEncoding,
+
+    /// Messages compression level.
+    pub compression_level: CompressionLevel,
 
     /// Messages synchronization delay.
     pub delay: Duration
@@ -48,6 +51,9 @@ pub struct ClientAppParamsBuilder {
     /// Messages encoding format.
     pub encoding: MessageEncoding,
 
+    /// Messages compression level.
+    pub compression_level: CompressionLevel,
+
     /// Messages synchronization delay.
     pub delay: Duration
 }
@@ -60,6 +66,7 @@ impl Default for ClientAppParamsBuilder {
             server_address: None,
             channel: String::from("hyperelm"),
             encoding: MessageEncoding::default(),
+            compression_level: CompressionLevel::default(),
             delay: Duration::from_secs(1)
         }
     }
@@ -91,6 +98,12 @@ impl ClientAppParamsBuilder {
         self
     }
 
+    pub fn compression_level(mut self, level: CompressionLevel) -> Self {
+        self.compression_level = level;
+
+        self
+    }
+
     pub fn delay(mut self, delay: Duration) -> Self {
         self.delay = delay;
 
@@ -104,6 +117,7 @@ impl ClientAppParamsBuilder {
             server_address: self.server_address?,
             channel: self.channel,
             encoding: self.encoding,
+            compression_level: self.compression_level,
             delay: self.delay
         })
     }
