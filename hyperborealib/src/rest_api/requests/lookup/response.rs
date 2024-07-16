@@ -143,32 +143,26 @@ impl AsJson for LookupResponseBody {
             Self::Local { client, available } => {
                 Ok(json!({
                     "disposition": "local",
-                    "result": {
-                        "client": client.to_json()?,
-                        "available": available
-                    }
+                    "client": client.to_json()?,
+                    "available": available
                 }))
             }
 
             Self::Remote { client, server, available } => {
                 Ok(json!({
                     "disposition": "remote",
-                    "result": {
-                        "client": client.to_json()?,
-                        "server": server.to_json()?,
-                        "available": available
-                    }
+                    "client": client.to_json()?,
+                    "server": server.to_json()?,
+                    "available": available
                 }))
             }
 
             Self::Hint { servers } => {
                 Ok(json!({
                     "disposition": "hint",
-                    "result": {
-                        "servers": servers.iter()
-                            .map(AsJson::to_json)
-                            .collect::<Result<Vec<_>, _>>()?
-                    }
+                    "servers": servers.iter()
+                        .map(AsJson::to_json)
+                        .collect::<Result<Vec<_>, _>>()?
                 }))
             }
         }
@@ -179,39 +173,35 @@ impl AsJson for LookupResponseBody {
             return Err(AsJsonError::FieldNotFound("disposition"));
         };
 
-        let Some(result) = json.get("result") else {
-            return Err(AsJsonError::FieldNotFound("result"));
-        };
-
         match disposition {
             "local" => {
-                let Some(client) = result.get("client") else {
-                    return Err(AsJsonError::FieldNotFound("result.client"));
+                let Some(client) = json.get("client") else {
+                    return Err(AsJsonError::FieldNotFound("client"));
                 };
 
                 Ok(Self::Local {
                     client: Client::from_json(client)?,
 
-                    available: result.get("available")
+                    available: json.get("available")
                         .and_then(Json::as_bool)
-                        .ok_or_else(|| AsJsonError::FieldNotFound("result.available"))?
+                        .ok_or_else(|| AsJsonError::FieldNotFound("available"))?
                 })
             }
 
             "remote" => {
-                let Some(client) = result.get("client") else {
-                    return Err(AsJsonError::FieldNotFound("result.client"));
+                let Some(client) = json.get("client") else {
+                    return Err(AsJsonError::FieldNotFound("client"));
                 };
 
-                let Some(server) = result.get("server") else {
-                    return Err(AsJsonError::FieldNotFound("result.server"));
+                let Some(server) = json.get("server") else {
+                    return Err(AsJsonError::FieldNotFound("server"));
                 };
 
                 Ok(Self::Remote {
                     client: Client::from_json(client)?,
                     server: Server::from_json(server)?,
 
-                    available: result.get("available")
+                    available: json.get("available")
                         .and_then(Json::as_bool)
                         .ok_or_else(|| AsJsonError::FieldNotFound("result.available"))?
                 })
@@ -219,9 +209,9 @@ impl AsJson for LookupResponseBody {
 
             "hint" => {
                 Ok(Self::Hint {
-                    servers: result.get("servers")
+                    servers: json.get("servers")
                         .and_then(Json::as_array)
-                        .ok_or_else(|| AsJsonError::FieldNotFound("result.servers"))?
+                        .ok_or_else(|| AsJsonError::FieldNotFound("servers"))?
                         .iter()
                         .map(AsJson::from_json)
                         .collect::<Result<Vec<_>, _>>()?

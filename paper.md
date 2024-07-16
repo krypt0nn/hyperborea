@@ -293,31 +293,27 @@ type LookupRequest = Request<{
 type LookupResponseLocal = {
     disposition: 'local',
 
-    result: {
-        // Local client info
-        client: Client,
+    // Local client info
+    client: Client,
 
-        // Is the client available
-        // Determined by the current server
-        available: boolean
-    }
+    // Is the client available
+    // Determined by the current server
+    available: boolean
 };
 
 // Lookup client is connected to remote server
 type LookupResponseRemote = {
     disposition: 'remote',
 
-    result: {
-        // Remote client info
-        client: Client,
+    // Remote client info
+    client: Client,
 
-        // Client's server info
-        server: Server,
+    // Client's server info
+    server: Server,
 
-        // Is the client available
-        // Determined by the current server
-        available: boolean
-    }
+    // Is the client available
+    // Determined by the current server
+    available: boolean
 };
 
 // Lookup client is not connected to local client, and current server
@@ -326,9 +322,9 @@ type LookupResponseRemote = {
 // where given client is.
 type LookupResponseHint = {
     disposition: 'hint',
-    result: {
-        servers: Server[]
-    }
+
+    // List of servers that can know about the needed client
+    servers: Server[]
 };
 
 type LookupResponse = Response<LookupResponseLocal | LookupResponseRemote | LookupResponseRemoteHint>;
