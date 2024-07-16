@@ -6,6 +6,10 @@ use super::MessagesError;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Encoding of the message.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct MessageEncoding {
     pub encoding: Encoding,
     pub encryption: Encryption,
@@ -14,6 +18,30 @@ pub struct MessageEncoding {
 
 impl MessageEncoding {
     #[inline]
+    /// Create new message encoding.
+    /// 
+    /// - `encoding` must contain algorithm which will
+    ///   convert raw bytes data into UTF-8 compatible text.
+    /// 
+    /// - `encryption` must contain algorithm which will
+    ///   encrypt raw bytes using secret key.
+    /// 
+    /// - `compression` must contain algorithm which will
+    ///   compress raw bytes to smaller size to reduce
+    ///   network transportation bandwith.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let encoding = MessageEncoding::new(
+    ///     Encoding::Base64,
+    ///     Encryption::None,
+    ///     Compression::Brotli
+    /// );
+    /// ```
     pub fn new(encoding: Encoding, encryption: Encryption, compression: Compression) -> Self {
         Self {
             encoding,
@@ -24,6 +52,31 @@ impl MessageEncoding {
 
     /// Apply compression, encryption and encoding
     /// to the given data.
+    /// 
+    /// - `message` must be a data slice you need to process.
+    /// 
+    /// - `secret` must be a secret key used for encryption.
+    /// 
+    /// - `level` must be a data compression level.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use std::str::FromStr;
+    /// 
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let encoding = MessageEncoding::from_str("base64/chacha20-poly1305/brotli").unwrap();
+    /// 
+    /// let processed = encoding.forward(
+    ///     b"Hello, World!",
+    ///     b"example 32 bytes long key ......",
+    ///     CompressionLevel::default()
+    /// ).unwrap();
+    /// 
+    /// assert_eq!(processed, "6aHXWENbkDrFuBQxQIa5RiPGgQ1/Je2rVeYw7Zt19VB8");
+    /// ```
     pub fn forward(&self, message: impl AsRef<[u8]>, secret: &[u8; 32], level: CompressionLevel) -> Result<String, MessagesError> {
         let message = self.compression.compress(message, level)?;
         let message = self.encryption.encrypt(message, secret)?;
@@ -33,6 +86,28 @@ impl MessageEncoding {
 
     /// Cease compression, encryption and encoding
     /// from the given data.
+    /// 
+    /// - `message` must be a data slice you need to process.
+    /// 
+    /// - `secret` must be a secret key used for decryption.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use std::str::FromStr;
+    /// 
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let encoding = MessageEncoding::from_str("base64/chacha20-poly1305/brotli").unwrap();
+    /// 
+    /// let processed = encoding.backward(
+    ///     "6aHXWENbkDrFuBQxQIa5RiPGgQ1/Je2rVeYw7Zt19VB8",
+    ///     b"example 32 bytes long key ......"
+    /// ).unwrap();
+    /// 
+    /// assert_eq!(processed, b"Hello, World!");
+    /// ```
     pub fn backward(&self, message: impl AsRef<str>, secret: &[u8; 32]) -> Result<Vec<u8>, MessagesError> {
         let message = self.encoding.decode(message)?;
         let message = self.encryption.decrypt(message, secret)?;

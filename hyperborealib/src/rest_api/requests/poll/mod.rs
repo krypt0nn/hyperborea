@@ -11,10 +11,18 @@ pub use response::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/poll` request.
+/// 
+/// This request is used to poll a message (get and delete)
+/// sent to the requesting client from the server's inbox.
+/// 
+/// Messaging API allows client to indirectly communicate with
+/// each other without need of direct access to (and from) the internet.
 pub struct PollRequest(pub Request<PollRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/poll` response.
 pub struct PollResponse(pub Response<PollResponseBody>);
 
 impl PollRequest {
@@ -24,6 +32,9 @@ impl PollRequest {
     }
 
     #[inline]
+    /// Validate the request.
+    /// 
+    /// Calls `validate()` function on the request's body.
     pub fn validate(&self) -> Result<bool, ValidationError> {
         self.0.validate()
     }
@@ -53,11 +64,15 @@ impl PollResponse {
         ))
     }
 
+    #[inline]
     pub fn error(status: ResponseStatus, reason: impl ToString) -> Self {
         Self(Response::error(status, reason))
     }
 
     #[inline]
+    /// Validate the response.
+    /// 
+    /// Calls `validate()` function on the response's body.
     pub fn validate(&self, proof_seed: u64) -> Result<bool, ValidationError> {
         self.0.validate(proof_seed)
     }

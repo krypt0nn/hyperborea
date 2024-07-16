@@ -9,6 +9,10 @@ use super::{MessageEncoding, MessagesError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Message body.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct Message {
     pub content: String,
     pub sign: String,
@@ -17,6 +21,43 @@ pub struct Message {
 
 impl Message {
     #[inline]
+    /// Create new message from raw values.
+    /// 
+    /// This methodd will not perform any additional
+    /// permutations with given data. It is expected
+    /// that they're already done by the user.
+    /// 
+    /// - `content` must contain encoded content of the message.
+    /// 
+    /// - `sign` must contain encoded digital signature
+    ///   of the original message's content.
+    /// 
+    /// - `encoding` must contain encoding format of the message.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use std::str::FromStr;
+    /// 
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let sender = SecretKey::random();
+    /// let receiver = SecretKey::random().public_key();
+    /// 
+    /// let encoding = MessageEncoding::from_str("base64/aes256-gcm/deflate").unwrap();
+    /// let level = CompressionLevel::Quality;
+    /// 
+    /// let secret = b"pre-defined 32 bytes secret key.";
+    /// let message = b"Hello, World!";
+    /// 
+    /// let sign = sender.create_signature(message);
+    /// 
+    /// let content = encoding.forward(message, secret, level).unwrap();
+    /// let sign = encoding.forward(sign, secret, level).unwrap();
+    /// 
+    /// let message = Message::new(content, sign, encoding);
+    /// ```
     pub fn new(content: impl ToString, sign: impl ToString, encoding: MessageEncoding) -> Self {
         Self {
             content: content.to_string(),
@@ -32,6 +73,44 @@ impl Message {
     /// 
     /// Signature and shared secret key is calculated using `sender`
     /// and `receiver` keys.
+    /// 
+    /// - `sender` must contain reference to the secret key
+    ///   of the message's sender. It will be used to create
+    ///   digital signature of this message and calculate
+    ///   shared secret key for the encryption.
+    /// 
+    /// - `receiver` must contain reference to the public key
+    ///   of the message's receiver. It will be used to calculate
+    ///   shared secret key used for data encryption.
+    /// 
+    /// - `data` should contain the message's content.
+    /// 
+    /// - `encoding` must contain the message's encoding format.
+    /// 
+    /// - `level` must contain data compression level.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use std::str::FromStr;
+    /// 
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let sender = SecretKey::random();
+    /// let receiver = SecretKey::random().public_key();
+    /// 
+    /// let encoding = MessageEncoding::from_str("base64/aes256-gcm/deflate").unwrap();
+    /// let level = CompressionLevel::Quality;
+    /// 
+    /// let message = Message::create(
+    ///     &sender,
+    ///     &receiver,
+    ///     b"Hello, World!",
+    ///     encoding,
+    ///     level
+    /// ).unwrap();
+    /// ```
     pub fn create(sender: &SecretKey, receiver: &PublicKey, data: impl AsRef<[u8]>, encoding: MessageEncoding, level: CompressionLevel) -> Result<Self, MessagesError> {
         let secret = sender.create_shared_secret(receiver, None);
 
@@ -48,6 +127,42 @@ impl Message {
     /// 
     /// This method will decrypt, decompress and decode stored
     /// message's content and validate its signature.
+    /// 
+    /// - `receiver` must contain reference to the secret key
+    ///   of the message's receiver. It will be used
+    ///   to calculate shared secret key.
+    /// 
+    /// - `sender` must contain reference to the public key
+    ///   of the message's sender. It will be used to calculate
+    ///   shared secret key and verify the message's signature.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use std::str::FromStr;
+    /// 
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let sender = SecretKey::random();
+    /// let receiver = SecretKey::random();
+    /// 
+    /// let encoding = MessageEncoding::from_str("base64/aes256-gcm/deflate").unwrap();
+    /// 
+    /// // Create the message (compress, encrypt and sign)
+    /// let message = Message::create(
+    ///     &sender,
+    ///     &receiver.public_key(),
+    ///     b"Hello, World!",
+    ///     encoding,
+    ///     CompressionLevel::default()
+    /// ).unwrap();
+    /// 
+    /// // Read the message (decompress, decrypt and verify signature)
+    /// let content = message.read(&receiver, &sender.public_key()).unwrap();
+    /// 
+    /// assert_eq!(content, b"Hello, World!");
+    /// ```
     pub fn read(&self, receiver: &SecretKey, sender: &PublicKey) -> Result<Vec<u8>, MessagesError> {
         let secret = receiver.create_shared_secret(sender, None);
 

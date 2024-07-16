@@ -5,6 +5,10 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Description of the remote client.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct Client {
     pub public_key: PublicKey,
     pub certificate: ConnectionCertificate,
@@ -13,6 +17,14 @@ pub struct Client {
 
 impl Client {
     #[inline]
+    /// Create client description.
+    /// 
+    /// - `public_key` must contain public key of the client.
+    /// 
+    /// - `certificate` must contain connection certificate
+    ///   of the client signed for its root server.
+    /// 
+    /// - `info` must contain information about the client (type).
     pub fn new(public_key: PublicKey, certificate: ConnectionCertificate, info: ClientInfo) -> Self {
         Self {
             public_key,

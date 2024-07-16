@@ -11,6 +11,10 @@ use crate::STANDARD_VERSION;
 /// It should contain list of all the clients connected to the current server.
 /// This request can be used by other servers or clients to fulfill their own
 /// routing table or to perform custom client lookups.
+/// 
+/// By providing useful information here you reduce
+/// total amount of requests sent within the network
+/// to lookup the clients.
 pub struct ClientsResponse {
     pub standard: u64,
     pub clients: Vec<Client>

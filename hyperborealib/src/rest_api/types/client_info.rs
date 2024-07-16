@@ -7,6 +7,10 @@ use crate::rest_api::types::ClientType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Information about the client.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct ClientInfo {
     pub client_type: ClientType,
     pub address: Option<String>

@@ -7,14 +7,39 @@ use crate::rest_api::types::ConnectionToken;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Digital certificate that proves that
+/// the client is connected to some server.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct ConnectionCertificate {
     pub token: ConnectionToken,
     pub sign: Vec<u8>
 }
 
 impl ConnectionCertificate {
+    /// Create new connection certificate.
+    /// 
+    /// - `client_secret` must contain secret key of the client
+    ///   that is connecting to the server. It will be used to
+    ///   create digital signature of the connection token.
+    /// 
+    /// - `server_public` must contain public key of the server
+    ///   to which the client is being connected.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let client_secret = SecretKey::random();
+    /// let server_public = SecretKey::random().public_key();
+    /// 
+    /// let certificate = ConnectionCertificate::new(&client_secret, server_public);
+    /// ```
     pub fn new(client_secret: &SecretKey, server_public: PublicKey) -> Self {
-        let token = ConnectionToken::new(server_public);
+        let token = ConnectionToken::now(server_public);
 
         let sign = client_secret.create_signature(token.to_bytes());
 
@@ -24,6 +49,32 @@ impl ConnectionCertificate {
         }
     }
 
+    /// Verify thath certificate is signed by a client
+    /// with given public key and is addressed to
+    /// a server with given public key.
+    /// 
+    /// - `client_public` must contain public key of the client
+    ///   that has made this certificate.
+    /// 
+    /// - `server_public` must contain public key of the server
+    ///   to which the client has made this certificate for.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let client_secret = SecretKey::random();
+    /// let server_secret = SecretKey::random();
+    /// 
+    /// let certificate = ConnectionCertificate::new(&client_secret, server_secret.public_key());
+    /// 
+    /// assert!(certificate.validate(
+    ///     &client_secret.public_key(),
+    ///     &server_secret.public_key()
+    /// ).unwrap());
+    /// ```
     pub fn validate(&self, client_public: &PublicKey, server_public: &PublicKey) -> Result<bool, CryptographyError> {
         if &self.token.public_key != server_public {
             return Ok(false);

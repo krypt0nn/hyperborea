@@ -6,12 +6,39 @@ use crate::STANDARD_VERSION;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `GET /api/v1/servers` response.
+/// 
+/// This response should contain list of servers
+/// known by the current server. This list can be used
+/// by other clients and servers to construct the map
+/// of the network and fill their own routing tables.
+/// 
+/// By providing useful information here you reduce
+/// total amount of requests sent within the network
+/// to lookup the clients.
 pub struct ServersResponse {
     pub standard: u64,
     pub servers: Vec<Server>
 }
 
 impl ServersResponse {
+    /// Create new `GET /api/v1/servers` response.
+    /// 
+    /// - `servers` should contain list of all
+    ///   known servers.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let response = ServersResponse::new(vec![
+    ///     Server::new(SecretKey::random().public_key(), "example1.org"),
+    ///     Server::new(SecretKey::random().public_key(), "example2.org"),
+    ///     Server::new(SecretKey::random().public_key(), "example3.org")
+    /// ]);
+    /// ```
     pub fn new(servers: impl Into<Vec<Server>>) -> Self {
         Self {
             standard: STANDARD_VERSION,

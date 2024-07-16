@@ -4,6 +4,9 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/poll` request body.
+/// 
+/// Refer to `PollRequest` for details.
 pub struct PollRequestBody {
     pub channel: String,
     pub limit: Option<u64>
@@ -11,6 +14,22 @@ pub struct PollRequestBody {
 
 impl PollRequestBody {
     #[inline]
+    /// Create new `POST /api/v1/poll` request body.
+    /// 
+    /// - `channel` must be a name of the channel from which
+    ///   we want to poll the messages.
+    /// 
+    /// - `limit` must be a maximal number of messages
+    ///   we want to poll, or `None` if all.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// // Read exactly one message from "example channel" channel
+    /// let request_body = PollRequestBody::new("example channel", Some(1));
+    /// ```
     pub fn new(channel: impl ToString, limit: Option<u64>) -> Self {
         Self {
             channel: channel.to_string(),

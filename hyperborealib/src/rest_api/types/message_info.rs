@@ -6,6 +6,10 @@ use crate::time::timestamp;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Information about the message (its header).
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct MessageInfo {
     pub sender: Sender,
     pub channel: String,
@@ -15,6 +19,70 @@ pub struct MessageInfo {
 
 impl MessageInfo {
     #[inline]
+    /// Create new stored message info.
+    /// 
+    /// - `sender` must be information about the sender
+    ///   client and server it is connected to.
+    /// 
+    /// - `channel` must be a name of the channel this
+    ///   message was sent into.
+    /// 
+    /// - `message` must contain the message's body.
+    /// 
+    /// - `received_at` must contain message receiving timestamp.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use std::str::FromStr;
+    /// 
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// use hyperborealib::time::timestamp;
+    /// 
+    /// let sender_client_secret   = SecretKey::random();
+    /// let sender_server_secret   = SecretKey::random();
+    /// let receiver_client_secret = SecretKey::random();
+    /// 
+    /// // Prepare Sender struct
+    /// let certificate = ConnectionCertificate::new(
+    ///     &sender_client_secret,
+    ///     sender_server_secret.public_key()
+    /// );
+    /// 
+    /// let client = Client::new(
+    ///     sender_client_secret.public_key(),
+    ///     certificate,
+    ///     ClientInfo::thin()
+    /// );
+    /// 
+    /// let server = Server::new(
+    ///     sender_server_secret.public_key(),
+    ///     "example.org"
+    /// );
+    /// 
+    /// let sender = Sender::new(client, server);
+    /// 
+    /// // Prepare message
+    /// let encoding = MessageEncoding::from_str("base64/chacha20-poly1305").unwrap();
+    /// 
+    /// let message = Message::create(
+    ///     &sender_client_secret,
+    ///     &receiver_client_secret.public_key(),
+    ///     b"Hello, World!",
+    ///     encoding,
+    ///     CompressionLevel::default()
+    /// ).unwrap();
+    /// 
+    /// // Prepare message info
+    /// let message_info = MessageInfo::new(
+    ///     sender,
+    ///     "example channel",
+    ///     message,
+    ///     timestamp()
+    /// );
+    /// ```
     pub fn new(sender: Sender, channel: impl ToString, message: Message, received_at: u64) -> Self {
         Self {
             sender,
@@ -26,7 +94,7 @@ impl MessageInfo {
 
     #[inline]
     /// Run `new()` method with current timestamp.
-    pub fn new_now(sender: Sender, channel: impl ToString, message: Message) -> Self {
+    pub fn now(sender: Sender, channel: impl ToString, message: Message) -> Self {
         Self::new(sender, channel, message, timestamp())
     }
 }
@@ -75,7 +143,7 @@ pub(crate) mod tests {
         let encoding = MessageEncoding::from_str("base64").unwrap();
         let message = Message::new("content", "sign", encoding);
 
-        MessageInfo::new_now(get_sender(), "Hello, World!", message)
+        MessageInfo::now(get_sender(), "Hello, World!", message)
     }
 
     #[test]

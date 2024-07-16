@@ -5,6 +5,10 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Description of the remote server.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct Server {
     pub public_key: PublicKey,
     pub address: String

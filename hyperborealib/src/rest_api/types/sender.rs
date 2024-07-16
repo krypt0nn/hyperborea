@@ -4,6 +4,10 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Description of the message's sender.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub struct Sender {
     pub client: Client,
     pub server: Server
@@ -29,7 +33,16 @@ impl Sender {
     /// use hyperborealib::crypto::prelude::*;
     /// use hyperborealib::rest_api::prelude::*;
     /// 
+    /// let client = SecretKey::random();
+    /// let server = SecretKey::random();
     /// 
+    /// let certificate = ConnectionCertificate::new(&client, server.public_key());
+    /// let info = ClientInfo::thin();
+    /// 
+    /// let client = Client::new(client.public_key(), certificate, info);
+    /// let server = Server::new(server.public_key(), "example.org");
+    /// 
+    /// let sender = Sender::new(client, server);
     /// ```
     pub fn new(client: Client, server: Server) -> Self {
         Self {

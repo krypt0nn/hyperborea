@@ -2,6 +2,10 @@ use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Type of the client.
+/// 
+/// This is a standard type declared in the
+/// hyperborea protocol's paper.
 pub enum ClientType {
     Thin,
     Thick,

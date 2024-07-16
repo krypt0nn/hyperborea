@@ -4,6 +4,9 @@ use crate::rest_api::{AsJson, AsJsonError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/send` response body.
+/// 
+/// Refer to `SendResponse` for details.
 pub struct SendResponseBody;
 
 impl SendResponseBody {

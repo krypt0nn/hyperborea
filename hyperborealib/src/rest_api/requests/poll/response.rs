@@ -4,6 +4,9 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/poll` response body.
+/// 
+/// Refer to `PollResponse` for details.
 pub struct PollResponseBody {
     pub messages: Vec<MessageInfo>,
     pub remaining: u64
@@ -11,9 +14,15 @@ pub struct PollResponseBody {
 
 impl PollResponseBody {
     #[inline]
-    pub fn new(messages: Vec<MessageInfo>, remaining: u64) -> Self {
+    /// Create new `POST /api/v1/poll` response body.
+    /// 
+    /// - `messages` must be a vector of messages info
+    ///   stored in the server inbox for the requester client.
+    /// 
+    /// - `remaining` must be a number of remaining inbox messages.
+    pub fn new(messages: impl Into<Vec<MessageInfo>>, remaining: u64) -> Self {
         Self {
-            messages,
+            messages: messages.into(),
             remaining
         }
     }
@@ -61,18 +70,18 @@ mod tests {
         let client = SecretKey::random();
         let server = SecretKey::random();
 
+        let certificate = ConnectionCertificate::new(&client, server.public_key());
         let info = ClientInfo::thin();
-        let cert = ConnectionCertificate::new(&client, server.public_key());
 
-        let client = Client::new(client.public_key(), cert, info);
-        let server = Server::new(server.public_key(), "amogus");
+        let client = Client::new(client.public_key(), certificate, info);
+        let server = Server::new(server.public_key(), "example.org");
 
         let sender = Sender::new(client, server.clone());
 
         let encoding = MessageEncoding::from_str("base64").unwrap();
         let message = Message::new("content", "sign", encoding);
 
-        let info = MessageInfo::new_now(sender, "Hello, World!", message);
+        let info = MessageInfo::now(sender, "Hello, World!", message);
 
         let response = PollResponseBody::new(vec![info], 100);
 

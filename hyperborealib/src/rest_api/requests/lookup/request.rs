@@ -17,6 +17,25 @@ pub struct LookupRequestBody {
 
 impl LookupRequestBody {
     #[inline]
+    /// Create new `POST /api/v1/lookup` request body.
+    /// 
+    /// - `client_public` must contain public key
+    ///   of the client we want to find.
+    /// 
+    /// - `client_type` is an optional filter field
+    ///   of the needed client type. It is used to
+    ///   split the public keys' namespace.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use hyperborealib::crypto::prelude::*;
+    /// use hyperborealib::rest_api::prelude::*;
+    /// 
+    /// let client_public = SecretKey::random().public_key();
+    /// 
+    /// let request_body = LookupRequestBody::new(client_public, None);
+    /// ```
     pub fn new(client_public: PublicKey, client_type: Option<ClientType>) -> Self {
         Self {
             public_key: client_public,

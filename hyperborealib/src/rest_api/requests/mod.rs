@@ -5,6 +5,23 @@
 //! It is not intended to be used directly by general users.
 //! It is recommended to make an abstraction over this
 //! library and this particular module for easier use.
+//! 
+//! # Protocol architecture
+//! 
+//! ```text
+//!  ┌────────┐                ┌────────┐ 
+//!  │        │    ┌──────────►│        │ 
+//!  │ Server │    │           │ Server │ 
+//!  │        │◄───┼──────┐    │        │ 
+//!  └────────┘    │      │    └────────┘ 
+//!      ▲         │      │         ▲     
+//!      │         │      │         │     
+//!  ┌───┴────┐    │      │    ┌────┴───┐ 
+//!  │        │    │      │    │        │ 
+//!  │ Client ├────┘      └────┤ Client │ 
+//!  │        │                │        │ 
+//!  └────────┘                └────────┘ 
+//! ```
 
 mod clients;
 mod servers;

@@ -6,6 +6,9 @@ use crate::rest_api::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// `POST /api/v1/send` request body.
+/// 
+/// Refer to `SendRequest` for details.
 pub struct SendRequestBody {
     pub sender: Sender,
     pub receiver_public: PublicKey,
