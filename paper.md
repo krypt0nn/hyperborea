@@ -347,12 +347,9 @@ type AnnounceRequestClient = {
     // Information about the client
     client: Client,
 
-    // Server to which the client is connected
-    server: Server,
-
-    // Certificate that proves that the client
-    // is connected to the given server
-    certificate: ConnectionCertificate
+    // Information about the server to which
+    // the client is connected
+    server: Server
 };
 
 type AnnounceRequestServer = {
