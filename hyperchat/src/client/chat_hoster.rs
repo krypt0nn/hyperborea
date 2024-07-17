@@ -17,7 +17,7 @@ pub struct ChatHosterState {
 
 pub struct ChatHosterApp {
     params: ClientAppParams,
-    middlewire: ClientMiddleware<ReqwestHttpClient>,
+    middleware: ClientMiddleware<ReqwestHttpClient>,
     state: Arc<ChatHosterState>
 }
 
@@ -39,7 +39,7 @@ impl ChatHosterApp {
                 .build()
                 .unwrap(),
 
-            middlewire: ClientMiddleware::new(
+            middleware: ClientMiddleware::new(
                 ReqwestHttpClient::default(),
                 ClientDriver::thin(client_secret)
             ),
@@ -187,8 +187,8 @@ impl ClientApp for ChatHosterApp {
     }
 
     #[inline]
-    fn get_middlewire(&self) ->  &ClientMiddleware<Self::HttpClient> {
-        &self.middlewire
+    fn get_middleware(&self) ->  &ClientMiddleware<Self::HttpClient> {
+        &self.middleware
     }
 
     #[inline]
