@@ -90,31 +90,6 @@ async fn main() -> anyhow::Result<()> {
                         client::command_servers(&middleware, address).await;
                     }
 
-                    Some("lookup") => {
-                        let Some(address) = args.args().first() else {
-                            log::error!("No server address given");
-
-                            continue;
-                        };
-
-                        let Some(public_key) = args.args().get(1) else {
-                            log::error!("No search client public key given");
-
-                            continue;
-                        };
-
-                        let public_key = match PublicKey::from_base64(public_key) {
-                            Ok(public_key) => public_key,
-                            Err(err) => {
-                                log::error!("Failed to deserialize public key from base64: {err}");
-
-                                continue;
-                            }
-                        };
-
-                        client::command_lookup(&middleware, address, public_key, None).await;
-                    }
-
                     Some("connect") => {
                         let Some(address) = args.args().first() else {
                             log::error!("No server address given");
@@ -123,7 +98,7 @@ async fn main() -> anyhow::Result<()> {
                         };
 
                         match middleware.connect(&address).await {
-                            Ok(_) => {
+                            Ok(connected_middlewire) => {
                                 log::info!("");
                                 log::info!("Connected successfully");
 
@@ -164,7 +139,7 @@ async fn main() -> anyhow::Result<()> {
                                                 }
                                             };
 
-                                            client::command_lookup(&middleware, address, public_key, None).await;
+                                            client::command_lookup(&connected_middlewire, public_key, None).await;
                                         }
 
                                         Some(command) => log::error!("Unknown command: {command}. Run help to get list of available commands")

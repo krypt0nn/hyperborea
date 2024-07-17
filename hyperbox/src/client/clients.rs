@@ -1,7 +1,7 @@
 use hyperborealib::http::client::HttpClient;
 use hyperborealib::rest_api::middleware::Client as ClientMiddleware;
 
-pub async fn command_clients<T: HttpClient>(middleware: &ClientMiddleware<T>, address: impl AsRef<str>) {
+pub async fn command_clients<T: HttpClient>(middleware: &ClientMiddleware<T>, address: impl std::fmt::Display) {
     match middleware.get_clients(address).await {
         Ok(clients) => {
             log::info!("");

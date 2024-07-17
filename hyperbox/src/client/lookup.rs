@@ -1,7 +1,7 @@
 use hyperborealib::prelude::*;
 
-pub async fn command_lookup<T: HttpClient>(middleware: &ClientMiddleware<T>, address: impl ToString, client_public: PublicKey, client_type: Option<ClientType>) {
-    match middleware.lookup(address, client_public, client_type).await {
+pub async fn command_lookup<T: HttpClient>(middleware: &ConnectedClientMiddlewire<T>, client_public: PublicKey, client_type: Option<ClientType>) {
+    match middleware.lookup(client_public, client_type).await {
         Ok(Some((client, server, available))) => {
             log::info!("");
             log::info!("Client found:");
