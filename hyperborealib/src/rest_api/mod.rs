@@ -25,7 +25,7 @@ pub mod prelude {
 
     pub use super::middleware::{
         Client as ClientMiddleware,
-        ConnectedClient as ConnectedClientMiddlewire,
+        ConnectedClient as ConnectedClientMiddleware,
         Server as ServerMiddleware,
         Error as MiddlewareError
     };

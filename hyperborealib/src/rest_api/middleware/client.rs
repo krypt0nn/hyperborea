@@ -392,7 +392,8 @@ impl<T: HttpClient> ConnectedClient<T> {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        receiver = receiver.to_base64(),
+        receiver_server,
+        receiver_public = receiver_public.to_base64(),
         channel = channel.to_string(),
         message = format!("{}: {}", message.encoding, message.content)
     )))]
@@ -400,7 +401,10 @@ impl<T: HttpClient> ConnectedClient<T> {
     /// 
     /// This method will perform `POST /api/v1/send` request.
     /// 
-    /// - `receiver` must be a public key of the message receiver.
+    /// - `receiver_server` must contain address of the server to which
+    ///   the receiver is connected (from which it polls the messages).
+    /// 
+    /// - `receiver_public` must be a public key of the message receiver.
     /// 
     /// - `channel` must be a string name of the channel to which
     ///   we want to send this message. Channels allow to differ
@@ -408,7 +412,7 @@ impl<T: HttpClient> ConnectedClient<T> {
     ///   parts (modules).
     /// 
     /// - `message` should contain the message you want to send.
-    pub async fn send(&self, receiver: PublicKey, channel: impl ToString, message: Message) -> Result<(), Error> {
+    pub async fn send(&self, receiver_server: impl std::fmt::Display, receiver_public: PublicKey, channel: impl ToString, message: Message) -> Result<(), Error> {
         #[cfg(feature = "tracing")]
         tracing::debug!("Sending POST /api/v1/send request");
 
@@ -424,7 +428,7 @@ impl<T: HttpClient> ConnectedClient<T> {
         let request = SendRequest::new(
             self.driver.secret_key(),
             sender,
-            receiver,
+            receiver_public,
             channel,
             message
         );
@@ -433,7 +437,7 @@ impl<T: HttpClient> ConnectedClient<T> {
 
         // Send request
         let response = self.http_client.post_request::<SendRequest, SendResponse>(
-            format!("http://{}/api/v1/send", &self.connected_server.address),
+            format!("http://{receiver_server}/api/v1/send"),
             request
         ).await?;
 
