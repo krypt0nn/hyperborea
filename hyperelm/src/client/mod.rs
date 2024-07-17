@@ -25,14 +25,6 @@ where
     T: ClientApp + Send + Sync + 'static,
     T::Error: std::fmt::Display
 {
-    let params = app.get_params();
-
-    // Try connecting to the application's server
-    app.get_middlewire().connect_to(
-        &params.server_address,
-        params.server_public.clone()
-    ).await?;
-
     // Start background updates task
     let client = Arc::new(app);
 

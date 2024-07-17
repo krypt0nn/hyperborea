@@ -58,7 +58,7 @@ where
         tracing::debug!("[server] Traversing network");
 
         driver.traversal().traverse(
-            traversal_client.http_client().clone(),
+            traversal_client.http_client_ref().clone(),
             &driver
         ).await;
 

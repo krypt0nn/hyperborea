@@ -51,45 +51,32 @@ pub trait ClientApp {
     type State;
     type Error: Send + Sync;
 
+    /// Get params of the client app.
     fn get_params(&self) -> &ClientAppParams;
-    fn get_middlewire(&self) -> &ClientMiddleware<Self::HttpClient>;
+
+    /// Get client app HTTP REST API client middleware.
+    fn get_middleware(&self) -> &ClientMiddleware<Self::HttpClient>;
+
+    /// Get client app's state.
     fn get_state(&self) -> Arc<Self::State>;
 
-    /// Get certificate that proves that the client is connected
-    /// to the given server.
-    fn get_certificate(&self) -> ConnectionCertificate {
+    /// Get connected client middleware.
+    /// 
+    /// It is highly recommended to re-implement this method
+    /// to reuse some local cache with some TTL.
+    async fn get_connected_middleware(&self) -> Result<ConnectedClientMiddleware<Self::HttpClient>, ClientAppError<Self::Error>> {
         let params = self.get_params();
 
-        ConnectionCertificate::new(
-            &params.client_secret,
+        Ok(self.get_middleware().connect_to(
+            &params.server_address,
             params.server_public.clone()
-        )
-    }
-
-    /// Get sender information about the current client.
-    fn get_sender(&self) -> Sender {
-        let params = self.get_params();
-
-        let client = Client::new(
-            params.client_secret.public_key(),
-            self.get_certificate(),
-            ClientInfo::thin()
-        );
-
-        let server = Server::new(
-            params.server_public.clone(),
-            &params.server_address
-        );
-
-        Sender::new(client, server)
+        ).await?)
     }
 
     /// Perform client searching in the network.
     async fn lookup(&self, public_key: PublicKey, client_type: Option<ClientType>) -> Result<Option<ClientEndpoint>, ClientAppError<Self::Error>> {
-        let server_address = &self.get_params().server_address;
-
-        let result = self.get_middlewire()
-            .lookup(server_address, public_key, client_type).await?
+        let result = self.get_connected_middleware().await?
+            .lookup(public_key, client_type).await?
             .map(|(client, server, _)| {
                 ClientEndpoint {
                     server_address: server.address,
@@ -103,7 +90,7 @@ pub trait ClientApp {
     /// Send request to given endpoint.
     async fn request(&self, endpoint: ClientEndpoint, request: Self::OutputRequest) -> Result<Self::OutputResponse, ClientAppError<Self::Error>> {
         let params = self.get_params();
-        let middlewire = self.get_middlewire();
+        let middleware = self.get_connected_middleware().await?;
 
         // Prepare request
         let request_id = safe_random_u64();
@@ -122,18 +109,16 @@ pub trait ClientApp {
             params.compression_level
         )?;
 
-        middlewire.send(
-            &endpoint.server_address,
+        middleware.send(
+            endpoint.server_address,
             endpoint.client_public,
-            self.get_sender(),
             &params.channel,
             request
         ).await?;
 
         // Receive response
         loop {
-            let (messages, _) = middlewire.poll(
-                &endpoint.server_address,
+            let (messages, _) = middleware.poll(
                 format!("{}@{request_id}", params.channel),
                 Some(1)
             ).await?;
@@ -162,7 +147,7 @@ pub trait ClientApp {
     /// Send message to given endpoint.
     async fn send(&self, endpoint: ClientEndpoint, message: Self::OutputMessage) -> Result<(), ClientAppError<Self::Error>> {
         let params = self.get_params();
-        let middlewire = self.get_middlewire();
+        let middleware = self.get_connected_middleware().await?;
 
         // Prepare message
         let message = json!({
@@ -178,10 +163,9 @@ pub trait ClientApp {
         )?;
 
         // Send message
-        middlewire.send(
+        middleware.send(
             endpoint.server_address,
             endpoint.client_public,
-            self.get_sender(),
             &params.channel,
             message
         ).await?;
@@ -192,9 +176,9 @@ pub trait ClientApp {
     /// Receive and process incoming messages.
     async fn update(&self) -> Result<(), ClientAppError<Self::Error>> {
         let params = self.get_params();
-        let middlewire = self.get_middlewire();
+        let middleware = self.get_connected_middleware().await?;
 
-        let (messages, _) = middlewire.poll(&params.server_address, &params.channel, None).await?;
+        let (messages, _) = middleware.poll(&params.channel, None).await?;
 
         for message_info in messages {
             // Decode the message and verify its validity
@@ -224,10 +208,9 @@ pub trait ClientApp {
                         params.compression_level
                     )?;
 
-                    middlewire.send(
+                    middleware.send(
                         &message_info.sender.server.address,
                         message_info.sender.client.public_key,
-                        self.get_sender(),
                         format!("{}@{request_id}", params.channel),
                         response
                     ).await?;
