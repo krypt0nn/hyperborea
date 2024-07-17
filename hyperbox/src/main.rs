@@ -1,14 +1,4 @@
-use hyperborealib::{LIBRARY_VERSION, STANDARD_VERSION};
-
-use hyperborealib::http::client::ReqwestHttpClient;
-use hyperborealib::http::server::AxumHttpServer;
-
-use hyperborealib::crypto::PublicKey;
-
-use hyperborealib::drivers::{ClientDriver, ServerDriver};
-use hyperborealib::drivers::server::prelude::*;
-
-use hyperborealib::rest_api::prelude::*;
+use hyperborealib::prelude::*;
 
 pub mod args;
 pub mod shell;
@@ -37,8 +27,8 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::from_env();
 
     log::info!("Hyperbox v{VERSION}");
-    log::info!("  Hyperborealib v{LIBRARY_VERSION}");
-    log::info!("  Standard v{STANDARD_VERSION}");
+    log::info!("  Hyperborealib v{HYPERBOREALIB_VERSION}");
+    log::info!("  Standard v{HYPERBOREALIB_STANDARD}");
     log::info!("");
 
     match args.command() {

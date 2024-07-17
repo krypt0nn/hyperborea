@@ -1,9 +1,4 @@
-use hyperborealib::http::client::HttpClient;
-
-use hyperborealib::crypto::PublicKey;
-
-use hyperborealib::rest_api::middleware::Client as ClientMiddleware;
-use hyperborealib::rest_api::connect::ClientType;
+use hyperborealib::prelude::*;
 
 pub async fn command_lookup<T: HttpClient>(middleware: &ClientMiddleware<T>, address: impl ToString, client_public: PublicKey, client_type: Option<ClientType>) {
     match middleware.lookup(address, client_public, client_type).await {
