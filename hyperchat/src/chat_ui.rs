@@ -79,7 +79,7 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
 
                             ChatHistoryBlockBody::MemberLeave { public_key } => {
                                 let name = chat_members_names.lock().await
-                                    .get(&public_key)
+                                    .get(public_key)
                                     .cloned()
                                     .unwrap_or_else(move || public_key.to_base64());
 
@@ -92,7 +92,7 @@ pub async fn run(client: Arc<ChatMemberApp>, endpoint: ClientEndpoint, params: P
 
                             ChatHistoryBlockBody::MemberSendMessage { public_key, message } => {
                                 let name = chat_members_names.lock().await
-                                    .get(&public_key)
+                                    .get(public_key)
                                     .cloned()
                                     .unwrap_or_else(move || public_key.to_base64());
 

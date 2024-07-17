@@ -1,6 +1,5 @@
 use hyperelm::prelude::*;
-
-use hyperborealib::crypto::*;
+use hyperborealib::prelude::*;
 
 mod api;
 mod chat_member;

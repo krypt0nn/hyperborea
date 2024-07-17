@@ -1,11 +1,7 @@
 use serde_json::{json, Value as Json};
 
 use hyperelm::prelude::*;
-
-use hyperborealib::crypto::{
-    SecretKey,
-    safe_random_u64
-};
+use hyperborealib::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Params {

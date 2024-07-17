@@ -1,6 +1,5 @@
 use hyperelm::prelude::*;
-
-use hyperborealib::crypto::SecretKey;
+use hyperborealib::prelude::*;
 
 use crate::params::Params;
 

@@ -1,8 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 
 use hyperelm::prelude::*;
+use hyperborealib::prelude::*;
 
-use hyperborealib::crypto::PublicKey;
 use hyperborealib::impl_as_json;
 
 use crate::client::ChatHistoryBlock;
