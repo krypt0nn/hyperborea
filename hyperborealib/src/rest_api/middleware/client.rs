@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::collections::{HashSet, VecDeque};
 
 use crate::crypto::asymmetric::PublicKey;
@@ -18,59 +19,66 @@ use super::Error;
 /// This struct is used to perform HTTP REST API requests
 /// to the servers from the name of inner client driver.
 pub struct Client<T> {
-    http_client: T,
-    driver: ClientDriver
+    http_client: Arc<T>,
+    driver: Arc<ClientDriver>
 }
 
 impl<T: HttpClient + Send + Sync> Client<T> {
-    #[inline]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all, fields(
+        http_client_type = std::any::type_name::<T>(),
+        client_secret = client_driver.secret_key().to_base64(),
+        client_info = ?client_driver.info()
+    )))]
     pub fn new(http_client: T, client_driver: ClientDriver) -> Self {
         #[cfg(feature = "tracing")]
-        tracing::trace!(
-            http_client_type = std::any::type_name::<T>(),
-            client_secret = client_driver.secret_key().to_base64(),
-            client_info = ?client_driver.info(),
-            "Building client REST API middleware"
-        );
+        tracing::trace!("Building client REST API middleware");
 
         Self {
-            http_client,
-            driver: client_driver
+            http_client: Arc::new(http_client),
+            driver: Arc::new(client_driver)
         }
     }
 
     #[inline]
-    pub fn http_client(&self) -> &T {
+    pub fn http_client(&self) -> Arc<T> {
+        self.http_client.clone()
+    }
+
+    #[inline]
+    pub fn http_client_ref(&self) -> &T {
         &self.http_client
     }
 
     #[inline]
-    pub fn driver(&self) -> &ClientDriver {
+    pub fn driver(&self) -> Arc<ClientDriver> {
+        self.driver.clone()
+    }
+
+    #[inline]
+    pub fn driver_ref(&self) -> &ClientDriver {
         &self.driver
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref()
+        server_address
     )))]
-    /// Request server's info and validate its cryptographic correctness.
+    /// Request server info.
     /// 
     /// This method will perform `GET /api/v1/info` request.
-    pub async fn get_info(&self, server_address: impl AsRef<str>) -> Result<InfoResponse, Error> {
+    /// 
+    /// - `server_address` must contain address of the server
+    ///   from which we want to request the info.
+    pub async fn get_info(&self, server_address: impl std::fmt::Display) -> Result<InfoResponse, Error> {
         #[cfg(feature = "tracing")]
-        tracing::debug!(
-            server_address = server_address.as_ref(),
-            "Sending GET /api/v1/info"
-        );
+        tracing::debug!("Sending GET /api/v1/info request");
 
+        // Send get info request
         let response = self.http_client.get_request::<InfoResponse>(
-            format!("http://{}/api/v1/info", server_address.as_ref())
+            format!("http://{server_address}/api/v1/info")
         ).await?;
 
-        if response.proof_seed < 1 << 63 {
-            return Err(Error::InvalidProofSeed);
-        }
-
-        if !response.public_key.verify_signature(response.proof_seed.to_be_bytes(), &response.proof_sign)? {
+        // Validate response
+        if !response.validate()? {
             return Err(Error::InvalidProofSeedSignature);
         }
 
@@ -78,60 +86,65 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref()
+        server_address
     )))]
-    /// Request list of local server's clients
+    /// Request list of local server's clients.
     /// 
     /// This method will perform `GET /api/v1/clients` request.
-    pub async fn get_clients(&self, server_address: impl AsRef<str>) -> Result<Vec<ClientApiRecord>, Error> {
+    /// 
+    /// - `server_address` must contain address of the server
+    ///   from which we want to request the clients list.
+    pub async fn get_clients(&self, server_address: impl std::fmt::Display) -> Result<Vec<ClientApiRecord>, Error> {
         #[cfg(feature = "tracing")]
-        tracing::debug!(
-            server_address = server_address.as_ref(),
-            "Sending GET /api/v1/clients"
-        );
+        tracing::debug!("Sending GET /api/v1/clients request");
 
+        // Send get clients request
         let response = self.http_client.get_request::<ClientsResponse>(
-            format!("http://{}/api/v1/clients", server_address.as_ref())
+            format!("http://{server_address}/api/v1/clients")
         ).await?;
 
         Ok(response.clients)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref()
+        server_address
     )))]
-    /// Request list of servers known to given server
+    /// Request list of servers known to given server.
     /// 
     /// This method will perform `GET /api/v1/servers` request.
-    pub async fn get_servers(&self, server_address: impl AsRef<str>) -> Result<Vec<ServerApiRecord>, Error> {
+    /// 
+    /// - `server_address` must contain address of the server
+    ///   from which we want to request the servers list.
+    pub async fn get_servers(&self, server_address: impl std::fmt::Display) -> Result<Vec<ServerApiRecord>, Error> {
         #[cfg(feature = "tracing")]
-        tracing::debug!(
-            server_address = server_address.as_ref(),
-            "Sending GET /api/v1/servers"
-        );
+        tracing::debug!("Sending GET /api/v1/servers request");
 
+        // Send get servers request
         let response = self.http_client.get_request::<ServersResponse>(
-            format!("http://{}/api/v1/servers", server_address.as_ref())
+            format!("http://{server_address}/api/v1/servers")
         ).await?;
 
         Ok(response.servers)
     }
 
-    #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref()
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all, fields(
+        server_address
     )))]
     /// Connect to the server
     /// 
     /// This method will call `get_info` method to request
     /// the server's public key and then call `connect_to` method.
-    pub async fn connect(&self, server_address: impl AsRef<str>) -> Result<(), Error> {
-        let server_info = self.get_info(server_address.as_ref()).await?;
+    /// 
+    /// - `server_address` must contain address of the server
+    ///   to which we want to connect.
+    pub async fn connect(&self, server_address: impl std::fmt::Display + Clone) -> Result<ConnectedClient<T>, Error> {
+        let server_info = self.get_info(server_address.clone()).await?;
 
         self.connect_to(server_address, server_info.public_key).await
     }
 
-    #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref(),
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all, fields(
+        server_address,
         server_public = server_public.to_base64()
     )))]
     /// Connect to the server with expected public key
@@ -141,31 +154,149 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     /// In this method we expect that the given server has
     /// given public key. We need it to create connection
     /// certificate.
-    pub async fn connect_to(&self, server_address: impl AsRef<str>, server_public: PublicKey) -> Result<(), Error> {
+    pub async fn connect_to(&self, server_address: impl std::fmt::Display, server_public: PublicKey) -> Result<ConnectedClient<T>, Error> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!("Sending POST /api/v1/connect request");
+
+        // Prepare connect request
         let request = ConnectRequest::new(
             self.driver.secret_key(),
-            server_public,
+            server_public.clone(),
             self.driver.info().clone()
         );
 
         let proof_seed = request.0.proof_seed;
+        let certificate = request.0.request.certificate.clone();
 
-        #[cfg(feature = "tracing")]
-        tracing::debug!(
-            server_address = server_address.as_ref(),
-            client_public = request.0.public_key.to_base64(),
-            "Sending POST /api/v1/connect"
-        );
-
+        // Send request
         let response = self.http_client.post_request::<ConnectRequest, ConnectResponse>(
-            format!("http://{}/api/v1/connect", server_address.as_ref()),
+            format!("http://{server_address}/api/v1/connect"),
             request
         ).await?;
 
+        // Validate response
         if !response.validate(proof_seed)? {
             return Err(Error::InvalidProofSeedSignature);
         }
 
+        // Check response status
+        match response.0 {
+            Response::Success { .. } => {
+                let client = ConnectedClient {
+                    http_client: self.http_client.clone(),
+                    driver: self.driver.clone(),
+                    connected_server: ServerApiRecord {
+                        public_key: server_public,
+                        address: server_address.to_string()
+                    },
+                    connection_certificate: certificate
+                };
+
+                Ok(client)
+            }
+
+            Response::Error { status, reason, .. } => {
+                Err(Error::RequestFailed {
+                    status,
+                    reason
+                })
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Hash)]
+/// Connected client HTTP middleware
+/// 
+/// This struct is used to perform HTTP REST API requests
+/// to the servers from the name of inner client driver.
+/// 
+/// This struct is derived from the `Client` middlewire
+/// and provides advanced methods that depend on connection
+/// certificate.
+pub struct ConnectedClient<T> {
+    http_client: Arc<T>,
+    driver: Arc<ClientDriver>,
+    connected_server: ServerApiRecord,
+    connection_certificate: ConnectionCertificate
+}
+
+impl<T: HttpClient> ConnectedClient<T> {
+    #[inline]
+    pub fn http_client(&self) -> Arc<T> {
+        self.http_client.clone()
+    }
+
+    #[inline]
+    pub fn http_client_ref(&self) -> &T {
+        &self.http_client
+    }
+
+    #[inline]
+    pub fn driver(&self) -> Arc<ClientDriver> {
+        self.driver.clone()
+    }
+
+    #[inline]
+    pub fn driver_ref(&self) -> &ClientDriver {
+        &self.driver
+    }
+
+    #[inline]
+    pub fn connected_server(&self) -> &ServerApiRecord {
+        &self.connected_server
+    }
+
+    #[inline]
+    pub fn connection_certificate(&self) -> &ConnectionCertificate {
+        &self.connection_certificate
+    }
+
+    /// Construct new `Client` struct from the protocol's paper.
+    /// 
+    /// Service function used by other methods in this struct.
+    pub fn get_client(&self) -> ClientApiRecord {
+        ClientApiRecord::new(
+            self.driver.secret_key().public_key(),
+            self.connection_certificate.clone(),
+            self.driver.info().clone()
+        )
+    }
+
+    #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
+        server
+    )))]
+    /// Announce remote server server about yourself.
+    /// 
+    /// This method will perform `POST /api/v1/announce` request.
+    /// 
+    /// - `server` should contain address of the server
+    ///   you want to announce about the current client.
+    pub async fn announce(&self, server: impl std::fmt::Display) -> Result<(), Error> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!("Sending POST /api/v1/announce request");
+
+        // Prepare announce request
+        let request = AnnounceRequest::client(
+            self.driver.secret_key(),
+            self.get_client(),
+            self.connected_server.clone()
+        );
+
+        let proof_seed = request.0.proof_seed;
+
+        // Send request
+        let response = self.http_client.post_request::<AnnounceRequest, AnnounceResponse>(
+            format!("http://{server}/api/v1/announce"),
+            request
+        ).await?;
+
+        // Validate response
+        if !response.validate(proof_seed)? {
+            return Err(Error::InvalidProofSeedSignature);
+        }
+
+        // Check response status
         if let Response::Error { status, reason, .. } = response.0 {
             return Err(Error::RequestFailed {
                 status,
@@ -177,27 +308,39 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.to_string(),
         client_public = client_public.to_base64(),
         client_type = ?client_type
     )))]
-    /// Lookup client using given server
+    /// Lookup given client.
     /// 
     /// This method will perform `POST /api/v1/lookup` request.
     /// 
-    /// `client_type` field is used as an optional filter.
+    /// - `client_public` must be a public key of the client
+    ///   you need to find.
+    /// 
+    /// - `client_type` is an optional filter of the type
+    ///   of the client you need to find.
+    /// 
+    /// This method will return a tuple of client and server
+    /// info and whether the client is available. Availability
+    /// of the client is decided by the server from which you
+    /// have obtained this info. You should not use this info
+    /// if you don't trust this server.
     /// 
     /// This method will keep requesting servers until no more
     /// hints returned or needed client is found.
-    pub async fn lookup(&self, server_address: impl ToString, client_public: PublicKey, client_type: Option<ClientType>) -> Result<Option<(ClientApiRecord, ServerApiRecord, bool)>, Error> {
+    pub async fn lookup(&self, client_public: PublicKey, client_type: Option<ClientType>) -> Result<Option<(ClientApiRecord, ServerApiRecord, bool)>, Error> {
+        // Prepare lookup request
         let request = LookupRequest::new(self.driver.secret_key(), client_public, client_type);
 
         let proof_seed = request.0.proof_seed;
 
+        // Queue of search hints
         let mut queue = VecDeque::from([
-            server_address.to_string()
+            self.connected_server.address.clone()
         ]);
 
+        // Store used servers to prevent infinite lookup loops
         let mut used_servers = HashSet::new();
 
         while let Some(server_address) = queue.pop_front() {
@@ -207,11 +350,7 @@ impl<T: HttpClient + Send + Sync> Client<T> {
             }
 
             #[cfg(feature = "tracing")]
-            tracing::debug!(
-                server_address,
-                client_public = request.0.public_key.to_base64(),
-                "Sending POST /api/v1/lookup"
-            );
+            tracing::debug!(server_address, "Sending POST /api/v1/lookup request");
 
             // Send lookup request
             let response = self.http_client.post_request::<LookupRequest, LookupResponse>(
@@ -253,31 +392,49 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref(),
-        client_public = client_public.to_base64(),
-        sender = ?sender,
+        receiver = receiver.to_base64(),
         channel = channel.to_string(),
-        message = ?message
+        message = format!("{}: {}", message.encoding, message.content)
     )))]
-    /// Send message to the given client
+    /// Send a message to remote client.
     /// 
     /// This method will perform `POST /api/v1/send` request.
-    pub async fn send(&self, server_address: impl AsRef<str>, client_public: PublicKey, sender: Sender, channel: impl ToString, message: Message) -> Result<(), Error> {
-        let request = SendRequest::new(self.driver.secret_key(), sender, client_public, channel, message);
+    /// 
+    /// - `receiver` must be a public key of the message receiver.
+    /// 
+    /// - `channel` must be a string name of the channel to which
+    ///   we want to send this message. Channels allow to differ
+    ///   messages streams for different applications and their
+    ///   parts (modules).
+    /// 
+    /// - `message` should contain the message you want to send.
+    pub async fn send(&self, receiver: PublicKey, channel: impl ToString, message: Message) -> Result<(), Error> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!("Sending POST /api/v1/send request");
+
+        // Prepare send message request
+        let client = ClientApiRecord::new(
+            self.driver.secret_key().public_key(),
+            self.connection_certificate.clone(),
+            ClientInfo::thin()
+        );
+
+        let sender = Sender::new(client, self.connected_server.clone());
+
+        let request = SendRequest::new(
+            self.driver.secret_key(),
+            sender,
+            receiver,
+            channel,
+            message
+        );
 
         let proof_seed = request.0.proof_seed;
 
-        #[cfg(feature = "tracing")]
-        tracing::debug!(
-            server_address = server_address.as_ref(),
-            client_public = request.0.public_key.to_base64(),
-            "Sending POST /api/v1/send"
-        );
-
         // Send request
         let response = self.http_client.post_request::<SendRequest, SendResponse>(
-            format!("http://{}/api/v1/send", server_address.as_ref()),
-            request.clone()
+            format!("http://{}/api/v1/send", &self.connected_server.address),
+            request
         ).await?;
 
         // Validate response
@@ -297,31 +454,36 @@ impl<T: HttpClient + Send + Sync> Client<T> {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(ret, skip_all, fields(
-        server_address = server_address.as_ref(),
         channel = channel.to_string(),
         limit
     )))]
-    /// Poll messages sent to the given client
+    /// Poll (read and delete) messages from the server's inbox.
     /// 
     /// This method will perform `POST /api/v1/poll` request.
     /// 
-    /// Returns list of messages and amount of remained.
-    pub async fn poll(&self, server_address: impl AsRef<str>, channel: impl ToString, limit: Option<u64>) -> Result<(Vec<MessageInfo>, u64), Error> {
+    /// - `channel` must contain string name of the messages channel.
+    /// 
+    /// - `limit` should contain amount of messages you want to poll,
+    ///   or `None` if all the stored. This param is used by the
+    ///   remote server which may not respect it, so you should
+    ///   consider implementing few manual checks if you don't trust
+    ///   the server you connected to.
+    /// 
+    /// This method will return vector of polled messages and
+    /// amount of remaining messages in the server's inbox.
+    pub async fn poll(&self, channel: impl ToString, limit: Option<u64>) -> Result<(Vec<MessageInfo>, u64), Error> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!("Sending POST /api/v1/poll request");
+
+        // Prepare poll request
         let request = PollRequest::new(self.driver.secret_key(), channel, limit);
 
         let proof_seed = request.0.proof_seed;
 
-        #[cfg(feature = "tracing")]
-        tracing::debug!(
-            server_address = server_address.as_ref(),
-            client_public = request.0.public_key.to_base64(),
-            "Sending POST /api/v1/poll"
-        );
-
-        // Send poll request
+        // Send request
         let response = self.http_client.post_request::<PollRequest, PollResponse>(
-            format!("http://{}/api/v1/poll", server_address.as_ref()),
-            request.clone()
+            format!("http://{}/api/v1/poll", &self.connected_server.address),
+            request
         ).await?;
 
         // Validate response
@@ -329,13 +491,10 @@ impl<T: HttpClient + Send + Sync> Client<T> {
             return Err(Error::InvalidProofSeedSignature);
         }
 
-        // Process response
+        // Check response status
         match response.0 {
             Response::Success { response, .. } => {
-                Ok((
-                    response.messages,
-                    response.remaining
-                ))
+                Ok((response.messages, response.remaining))
             }
 
             Response::Error { status, reason, .. } => {

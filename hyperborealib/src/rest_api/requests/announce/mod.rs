@@ -13,13 +13,13 @@ pub use response::AnnounceResponseBody;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// `POST /api/v1/announce` request.
 /// 
-/// This request is sent to the `POST /api/v1/connect` to
-/// perform client connection to the chosen server. Connected
-/// clients are linked to their servers by the connection
-/// certificates. They should be used to identify to which
-/// server a client is connected if there's two or more records
-/// of this client connected to different servers. In this case
-/// one with newest certificate is chosen.
+/// This request is sent to the `POST /api/v1/announce` to
+/// announce a server about either some another server or
+/// a (client, server) pair. It is used to help other network
+/// members to find and reach you.
+/// 
+/// This request is highly recommended to be sent automatically
+/// in background to all the known servers after a period of time.
 pub struct AnnounceRequest(pub Request<AnnounceRequestBody>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

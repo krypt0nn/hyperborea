@@ -5,8 +5,8 @@ use crate::rest_api::status::ResponseStatus;
 mod client;
 mod server;
 
-pub use client::Client;
-pub use server::Server;
+pub use client::*;
+pub use server::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
