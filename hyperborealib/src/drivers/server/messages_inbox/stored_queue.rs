@@ -10,21 +10,21 @@ use crate::rest_api::prelude::*;
 use super::MessagesInbox;
 
 #[derive(Debug, Clone)]
-pub struct BasicInbox {
+pub struct StoredQueueMessagesInbox {
     pub inbox: Cache<PublicKey, Vec<MessageInfo>>
 }
 
-impl Default for BasicInbox {
+impl Default for StoredQueueMessagesInbox {
     #[inline]
     fn default() -> Self {
         Self::new(Duration::from_secs(60 * 60 * 24))
     }
 }
 
-impl BasicInbox {
+impl StoredQueueMessagesInbox {
     pub fn new(ttl: Duration) -> Self {
         #[cfg(feature = "tracing")]
-        tracing::trace!("Building new BasicInbox with {} seconds lifetime", ttl.as_secs());
+        tracing::trace!("Building new StoredQueueMessagesInbox with {} seconds lifetime", ttl.as_secs());
 
         Self {
             inbox: Cache::builder()
@@ -35,7 +35,7 @@ impl BasicInbox {
 }
 
 #[async_trait::async_trait]
-impl MessagesInbox for BasicInbox {
+impl MessagesInbox for StoredQueueMessagesInbox {
     async fn add_message(&self, sender: Sender, receiver: PublicKey, channel: String, message: Message) {
         #[cfg(feature = "tracing")]
         tracing::debug!(

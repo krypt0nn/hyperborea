@@ -2,7 +2,8 @@ use crate::crypto::asymmetric::PublicKey;
 
 use crate::rest_api::prelude::*;
 
-pub mod basic_inbox;
+#[cfg(feature = "inbox-stored-queue")]
+pub mod stored_queue;
 
 #[async_trait::async_trait]
 /// MessagesQueue is a struct that stores messages

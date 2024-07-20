@@ -173,9 +173,9 @@ async fn main() -> anyhow::Result<()> {
 
                     Some("start") => {
                         let server = ServerDriver::new(
-                            GlobalTableRouter::default(),
+                            GlobalTableRouter::new(),
                             BfsRecursionTraversal,
-                            BasicInbox::default(),
+                            StoredQueueMessagesInbox::default(),
                             ServerParams::default()
                         );
 

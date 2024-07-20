@@ -16,18 +16,16 @@ pub mod prelude {
         ServerParams
     };
 
-    pub use super::router::{
-        Router,
-        global_table::GlobalTableRouter
-    };
+    pub use super::router::Router;
+    pub use super::traversal::Traversal;
+    pub use super::messages_inbox::MessagesInbox;
 
-    pub use super::traversal::{
-        Traversal,
-        bfs_recursion::BfsRecursionTraversal
-    };
+    #[cfg(feature = "router-global-table")]
+    pub use super::router::global_table::GlobalTableRouter;
 
-    pub use super::messages_inbox::{
-        MessagesInbox,
-        basic_inbox::BasicInbox
-    };
+    #[cfg(feature = "traversal-bfs-recursion")]
+    pub use super::traversal::bfs_recursion::BfsRecursionTraversal;
+
+    #[cfg(feature = "inbox-stored-queue")]
+    pub use super::messages_inbox::stored_queue::StoredQueueMessagesInbox;
 }

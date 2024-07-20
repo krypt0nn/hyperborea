@@ -11,10 +11,30 @@ edition = "2021"
 [features]
 serde = ["k256/serde"]
 tracing = ["dep:tracing"]
+
+# HTTP traits implementations
 client-reqwest = ["dep:reqwest"]
 server-axum = ["dep:axum", "dep:tokio"]
 
-default = ["serde", "tracing"]
+# Server backends traits implementation
+router-global-table = ["dep:tokio", "tokio/fs"]
+traversal-bfs-recursion = []
+inbox-stored-queue = []
+
+full = [
+    "serde",
+    "tracing",
+    "client-reqwest",
+    "server-axum",
+    "router-global-table",
+    "traversal-bfs-recursion",
+    "inbox-stored-queue"
+]
+
+default = [
+    "serde",
+    "tracing"
+]
 
 [dependencies]
 thiserror = "1.0"

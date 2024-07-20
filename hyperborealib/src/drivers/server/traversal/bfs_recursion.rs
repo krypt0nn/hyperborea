@@ -16,18 +16,20 @@ impl Traversal for BfsRecursionTraversal {
         T: Traversal + Sync,
         I: MessagesInbox + Sync
     {
-        let client = ClientMiddleware::new(http_client, server.as_client());
+        if let Ok(remote_servers) = server.router().servers().await {
+            let client = ClientMiddleware::new(http_client, server.as_client());
 
-        let mut remote_servers = VecDeque::from(server.router().servers().await);
+            let mut remote_servers = VecDeque::from(remote_servers);
 
-        while let Some(remote_server) = remote_servers.pop_front() {
-            if let Ok(mut response) = client.get_servers(&remote_server.address).await {
-                for remote_server in response.drain(..) {
-                    remote_servers.push_back(remote_server);
+            while let Some(remote_server) = remote_servers.pop_front() {
+                if let Ok(mut response) = client.get_servers(&remote_server.address).await {
+                    for remote_server in response.drain(..) {
+                        remote_servers.push_back(remote_server);
+                    }
                 }
-            }
 
-            server.router().index_server(remote_server).await;
+                server.router().index_server(remote_server).await;
+            }
         }
     }
 }

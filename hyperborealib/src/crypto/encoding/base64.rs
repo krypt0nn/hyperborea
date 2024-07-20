@@ -3,7 +3,7 @@ use base64::engine::GeneralPurpose as Base64Engine;
 
 lazy_static::lazy_static! {
     pub static ref BASE64: Base64Engine = Base64Engine::new(
-        &base64::alphabet::STANDARD,
+        &base64::alphabet::URL_SAFE,
         base64::engine::GeneralPurposeConfig::default()
     );
 }

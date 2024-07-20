@@ -2,6 +2,7 @@ use crate::http::client::HttpClient;
 
 use super::prelude::*;
 
+#[cfg(feature = "traversal-bfs-recursion")]
 pub mod bfs_recursion;
 
 #[async_trait::async_trait]

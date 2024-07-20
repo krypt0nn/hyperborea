@@ -1,19 +1,10 @@
 use crate::drivers::ClientDriver;
-
 use crate::rest_api::prelude::*;
-
-use super::router::global_table::GlobalTableRouter;
-use super::traversal::bfs_recursion::BfsRecursionTraversal;
-use super::messages_inbox::basic_inbox::BasicInbox;
 
 use super::params::ServerParams;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ServerDriver<
-    Router = GlobalTableRouter,
-    Traversal = BfsRecursionTraversal,
-    MessagesInbox = BasicInbox
-> {
+pub struct ServerDriver<Router, Traversal, MessagesInbox> {
     router: Router,
     traversal: Traversal,
     messages_inbox: MessagesInbox,
