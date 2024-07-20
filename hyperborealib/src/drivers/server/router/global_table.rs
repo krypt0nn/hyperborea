@@ -206,7 +206,7 @@ mod tests {
         for client in local {
             let found = table.lookup_local_client(
                 &client.public_key,
-                Some(client.info.client_type.clone())
+                Some(client.info.client_type)
             ).await.unwrap().unwrap();
 
             assert_eq!(client, found.0);
@@ -215,7 +215,7 @@ mod tests {
         for (client, server) in remote {
             let found = table.lookup_remote_client(
                 &client.public_key,
-                Some(client.info.client_type.clone())
+                Some(client.info.client_type)
             ).await.unwrap().unwrap();
 
             assert_eq!(client, found.0);

@@ -28,7 +28,7 @@ impl Traversal for BfsRecursionTraversal {
                     }
                 }
 
-                server.router().index_server(remote_server).await;
+                let _ = server.router().index_server(remote_server).await;
             }
         }
     }
