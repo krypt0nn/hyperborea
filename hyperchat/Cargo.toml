@@ -9,7 +9,7 @@ license = "GPL-3.0"
 edition = "2021"
 
 [dependencies]
-hyperelm = { path = "../hyperelm" }
+hyperelm = { path = "../hyperelm", features = ["full"] }
 
 tokio = { version = "1.38", features = ["full"] }
 
