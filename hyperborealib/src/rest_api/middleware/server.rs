@@ -66,7 +66,8 @@ where
                 tracing::trace!(?client_address, "GET /api/v1/clients");
 
                 let clients = driver.router()
-                    .local_clients().await;
+                    .local_clients().await
+                    .unwrap_or_default();
 
                 #[cfg(feature = "tracing")]
                 tracing::trace!("GET /api/v1/clients: returned {} records", clients.len());
@@ -83,7 +84,8 @@ where
                 tracing::trace!(?client_address, "GET /api/v1/servers");
 
                 let servers = driver.router()
-                    .servers().await;
+                    .servers().await
+                    .unwrap_or_default();
 
                 #[cfg(feature = "tracing")]
                 tracing::trace!("GET /api/v1/servers: returned {} records", servers.len());
@@ -131,7 +133,12 @@ where
                     "POST /api/v1/connect: indexing local client"
                 );
 
-                driver.router().index_local_client(client).await;
+                if let Err(err) = driver.router().index_local_client(client).await {
+                    return ConnectResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("Failed to index local client: {err}")
+                    );
+                }
 
                 ConnectResponse::success(
                     ResponseStatus::Success,
@@ -167,27 +174,49 @@ where
                 }
 
                 // Try to find the client in the local index
-                if let Some(client) = driver.router().lookup_local_client(&request.0.public_key, request.0.request.client_type).await {
-                    let body = LookupResponseBody::local(client, true);
+                match driver.router().lookup_local_client(&request.0.public_key, request.0.request.client_type).await {
+                    Ok(Some((client, available))) => {
+                        let body = LookupResponseBody::local(client, available);
 
-                    return LookupResponse::success(
-                        ResponseStatus::Success,
-                        &driver.params().secret_key,
-                        request.0.proof_seed,
-                        body
-                    );
+                        return LookupResponse::success(
+                            ResponseStatus::Success,
+                            &driver.params().secret_key,
+                            request.0.proof_seed,
+                            body
+                        );
+                    }
+
+                    Err(err) => {
+                        return LookupResponse::error(
+                            ResponseStatus::ServerError,
+                            format!("Failed to lookup local client: {err}")
+                        );
+                    }
+
+                    _ => ()
                 }
 
                 // Try to find the client in the remote index
-                if let Some((client, server)) = driver.router().lookup_remote_client(&request.0.public_key, request.0.request.client_type).await {
-                    let body = LookupResponseBody::remote(client, server, true);
+                match driver.router().lookup_remote_client(&request.0.public_key, request.0.request.client_type).await {
+                    Ok(Some((client, server, available))) => {
+                        let body = LookupResponseBody::remote(client, server, available);
 
-                    return LookupResponse::success(
-                        ResponseStatus::Success,
-                        &driver.params().secret_key,
-                        request.0.proof_seed,
-                        body
-                    );
+                        return LookupResponse::success(
+                            ResponseStatus::Success,
+                            &driver.params().secret_key,
+                            request.0.proof_seed,
+                            body
+                        );
+                    }
+
+                    Err(err) => {
+                        return LookupResponse::error(
+                            ResponseStatus::ServerError,
+                            format!("Failed to lookup remote client: {err}")
+                        );
+                    }
+
+                    _ => ()
                 }
 
                 // Return searching hint if neither local nor known remote record found
@@ -195,12 +224,23 @@ where
                     .lookup_remote_client_hint(&request.0.public_key, request.0.request.client_type)
                     .await;
 
-                LookupResponse::success(
-                    ResponseStatus::Success,
-                    &driver.params().secret_key,
-                    request.0.proof_seed,
-                    LookupResponseBody::hint(hint)
-                )
+                match hint {
+                    Ok(hint) => {
+                        LookupResponse::success(
+                            ResponseStatus::Success,
+                            &driver.params().secret_key,
+                            request.0.proof_seed,
+                            LookupResponseBody::hint(hint)
+                        )
+                    }
+
+                    Err(err) => {
+                        LookupResponse::error(
+                            ResponseStatus::ServerError,
+                            format!("Failed to lookup remote client hint: {err}")
+                        )
+                    }
+                }
             }
         }).await;
 
