@@ -75,7 +75,7 @@ impl MessageEncoding {
     ///     CompressionLevel::default()
     /// ).unwrap();
     /// 
-    /// assert_eq!(processed, "6aHXWENbkDrFuBQxQIa5RiPGgQ1/Je2rVeYw7Zt19VB8");
+    /// assert_eq!(processed, "6aHXWENbkDrFuBQxQIa5RiPGgQ1_Je2rVeYw7Zt19VB8");
     /// ```
     pub fn forward(&self, message: impl AsRef<[u8]>, secret: &[u8; 32], level: CompressionLevel) -> Result<String, MessagesError> {
         let message = self.compression.compress(message, level)?;
@@ -102,7 +102,7 @@ impl MessageEncoding {
     /// let encoding = MessageEncoding::from_str("base64/chacha20-poly1305/brotli").unwrap();
     /// 
     /// let processed = encoding.backward(
-    ///     "6aHXWENbkDrFuBQxQIa5RiPGgQ1/Je2rVeYw7Zt19VB8",
+    ///     "6aHXWENbkDrFuBQxQIa5RiPGgQ1_Je2rVeYw7Zt19VB8",
     ///     b"example 32 bytes long key ......"
     /// ).unwrap();
     /// 
