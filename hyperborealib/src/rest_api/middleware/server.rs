@@ -97,7 +97,7 @@ where
         http_server.post::<ConnectRequest, ConnectResponse, _>("/api/v1/connect", {
             let driver = driver.clone();
 
-            |client_address, request| async move {
+            |client_address, request: ConnectRequest| async move {
                 #[cfg(feature = "tracing")]
                 tracing::trace!(?client_address, "POST /api/v1/connect");
 
@@ -107,7 +107,7 @@ where
 
                     Err(err) => return ConnectResponse::error(
                         ResponseStatus::ServerError,
-                        format!("An error occured during request validation: {err}")
+                        format!("Failed to validate request: {err}")
                     )
                 };
 
@@ -148,10 +148,64 @@ where
             }
         }).await;
 
+        http_server.post::<AnnounceRequest, AnnounceResponse, _>("/api/v1/announce", {
+            let driver = driver.clone();
+
+            |client_address, request: AnnounceRequest| async move {
+                #[cfg(feature = "tracing")]
+                tracing::trace!(?client_address, "POST /api/v1/announce");
+
+                // Validate incoming request
+                let validated = match request.validate() {
+                    Ok(validated) => validated,
+
+                    Err(err) => return AnnounceResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("Failed to validate request: {err}")
+                    )
+                };
+
+                // Check if request is valid
+                if !validated {
+                    return AnnounceResponse::error(
+                        ResponseStatus::RequestValidationFailed,
+                        "Request validation failed"
+                    );
+                }
+
+                // Index client in the routing table
+                match request.0.request {
+                    AnnounceRequestBody::Client { client, server } => {
+                        if let Err(err) = driver.router().index_remote_client(client, server).await {
+                            return AnnounceResponse::error(
+                                ResponseStatus::ServerError,
+                                format!("Failed to index remote client: {err}")
+                            );
+                        }
+                    }
+
+                    AnnounceRequestBody::Server { server } => {
+                        if let Err(err) = driver.router().index_server(server).await {
+                            return AnnounceResponse::error(
+                                ResponseStatus::ServerError,
+                                format!("Failed to index server: {err}")
+                            );
+                        }
+                    }
+                }
+
+                AnnounceResponse::success(
+                    ResponseStatus::Success,
+                    &driver.params().secret_key,
+                    request.0.proof_seed
+                )
+            }
+        }).await;
+
         http_server.post::<LookupRequest, LookupResponse, _>("/api/v1/lookup", {
             let driver = driver.clone();
 
-            |client_address, request| async move {
+            |client_address, request: LookupRequest| async move {
                 #[cfg(feature = "tracing")]
                 tracing::trace!(?client_address, "POST /api/v1/lookup");
 
@@ -161,7 +215,7 @@ where
 
                     Err(err) => return LookupResponse::error(
                         ResponseStatus::ServerError,
-                        format!("An error occured during request validation: {err}")
+                        format!("Failed to validate request: {err}")
                     )
                 };
 
@@ -186,12 +240,10 @@ where
                         );
                     }
 
-                    Err(err) => {
-                        return LookupResponse::error(
-                            ResponseStatus::ServerError,
-                            format!("Failed to lookup local client: {err}")
-                        );
-                    }
+                    Err(err) => return LookupResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("Failed to lookup local client: {err}")
+                    ),
 
                     _ => ()
                 }
@@ -209,12 +261,10 @@ where
                         );
                     }
 
-                    Err(err) => {
-                        return LookupResponse::error(
-                            ResponseStatus::ServerError,
-                            format!("Failed to lookup remote client: {err}")
-                        );
-                    }
+                    Err(err) => return LookupResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("Failed to lookup remote client: {err}")
+                    ),
 
                     _ => ()
                 }
@@ -225,21 +275,17 @@ where
                     .await;
 
                 match hint {
-                    Ok(hint) => {
-                        LookupResponse::success(
-                            ResponseStatus::Success,
-                            &driver.params().secret_key,
-                            request.0.proof_seed,
-                            LookupResponseBody::hint(hint)
-                        )
-                    }
+                    Ok(hint) => LookupResponse::success(
+                        ResponseStatus::Success,
+                        &driver.params().secret_key,
+                        request.0.proof_seed,
+                        LookupResponseBody::hint(hint)
+                    ),
 
-                    Err(err) => {
-                        LookupResponse::error(
-                            ResponseStatus::ServerError,
-                            format!("Failed to lookup remote client hint: {err}")
-                        )
-                    }
+                    Err(err) => LookupResponse::error(
+                        ResponseStatus::ServerError,
+                        format!("Failed to lookup remote client hint: {err}")
+                    )
                 }
             }
         }).await;
@@ -247,7 +293,7 @@ where
         http_server.post::<SendRequest, SendResponse, _>("/api/v1/send", {
             let driver = driver.clone();
 
-            |client_address, request| async move {
+            |client_address, request: SendRequest| async move {
                 #[cfg(feature = "tracing")]
                 tracing::trace!(?client_address, "POST /api/v1/send");
 
@@ -257,7 +303,7 @@ where
 
                     Err(err) => return SendResponse::error(
                         ResponseStatus::ServerError,
-                        format!("An error occured during request validation: {err}")
+                        format!("Failed to validate request: {err}")
                     )
                 };
 
@@ -288,7 +334,7 @@ where
         http_server.post::<PollRequest, PollResponse, _>("/api/v1/poll", {
             let driver = driver.clone();
 
-            |client_address, request| async move {
+            |client_address, request: PollRequest| async move {
                 #[cfg(feature = "tracing")]
                 tracing::trace!(?client_address, "POST /api/v1/poll");
 
@@ -298,7 +344,7 @@ where
 
                     Err(err) => return PollResponse::error(
                         ResponseStatus::ServerError,
-                        format!("An error occured during request validation: {err}")
+                        format!("Failed to validate request: {err}")
                     )
                 };
 
