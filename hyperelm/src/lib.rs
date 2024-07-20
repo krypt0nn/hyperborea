@@ -13,9 +13,11 @@ pub mod prelude {
 
     pub use super::server::{
         ServerApp,
-        ServerAppParams,
-        BasicServerApp
+        ServerAppParams
     };
+
+    #[cfg(feature = "server-basic-app")]
+    pub use super::server::BasicServerApp;
 
     pub use super::build_client;
 }

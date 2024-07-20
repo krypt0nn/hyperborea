@@ -3,10 +3,14 @@ use hyperborealib::rest_api::prelude::*;
 
 mod params;
 mod app;
-mod basic_app;
 
 pub use params::*;
 pub use app::*;
+
+#[cfg(feature = "server-basic-app")]
+mod basic_app;
+
+#[cfg(feature = "server-basic-app")]
 pub use basic_app::*;
 
 /// Start given server application in tokio async thread,

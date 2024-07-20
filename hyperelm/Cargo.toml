@@ -12,6 +12,19 @@ edition = "2021"
 serde = ["hyperborealib/serde"]
 tracing = ["hyperborealib/tracing", "dep:tracing"]
 
+server-basic-app = [
+    "hyperborealib/router-global-table",
+    "hyperborealib/traversal-bfs-recursion",
+    "hyperborealib/inbox-stored-queue"
+]
+
+full = [
+    "serde",
+    "tracing",
+    "server-basic-app",
+    "hyperborealib/full"
+]
+
 default = ["serde", "tracing"]
 
 [dependencies]
